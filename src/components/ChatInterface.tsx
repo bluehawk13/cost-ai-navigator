@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Send, Bot, User, Loader2, AlertCircle, Brain } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;
@@ -15,10 +15,11 @@ interface Message {
 }
 
 const ChatInterface = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?",
+      content: `Hello${user?.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
       sender: 'agent',
       timestamp: new Date()
     }
@@ -59,9 +60,9 @@ const ChatInterface = () => {
           'x-api-key': 'sk-default-gLsaQsiInbLlKDdFTxKqVtaBvrSIeTIk'
         },
         body: JSON.stringify({
-          user_id: "reddyjaswanth361@gmail.com",
+          user_id: user?.email || "anonymous@example.com",
           agent_id: "683c3a403b7c57f1745cef6c",
-          session_id: "undefined-ipql4mo7cjr",
+          session_id: `${user?.id || 'anonymous'}-${Date.now()}`,
           message: inputMessage
         })
       });

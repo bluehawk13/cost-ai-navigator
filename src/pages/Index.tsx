@@ -4,14 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Zap, Target, BarChart3, Cog, MessageSquare, ArrowRight, Star, Shield, Users } from 'lucide-react';
+import { Brain, Zap, Target, BarChart3, Cog, MessageSquare, ArrowRight, Star, Shield, Users, User, LogIn } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ChatInterface from '@/components/ChatInterface';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import About from '@/components/About';
+import UserProfile from '@/components/UserProfile';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl mb-4 mx-auto w-fit">
+            <Brain className="h-8 w-8 text-white animate-pulse" />
+          </div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -28,12 +46,25 @@ const Index = () => {
               </span>
             </div>
             
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="home">Home</TabsTrigger>
-                <TabsTrigger value="chat">Chat</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center space-x-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="home">Home</TabsTrigger>
+                  <TabsTrigger value="chat">Chat</TabsTrigger>
+                  {user && <TabsTrigger value="profile">Profile</TabsTrigger>}
+                </TabsList>
+              </Tabs>
+              
+              {!user && (
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -43,7 +74,7 @@ const Index = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsContent value="home" className="mt-0">
             <div className="space-y-20 pb-20">
-              <Hero onGetStarted={() => setActiveTab("chat")} />
+              <Hero onGetStarted={() => user ? setActiveTab("chat") : navigate('/auth')} />
               <About />
               <Features />
               
@@ -54,15 +85,18 @@ const Index = () => {
                     Ready to Optimize Your AI Costs?
                   </h2>
                   <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-                    Start chatting with our AI Cost Optimization Manager Agent and discover how much you can save.
+                    {user 
+                      ? "Start chatting with our AI Cost Optimization Manager Agent and discover how much you can save."
+                      : "Join thousands of users who are already saving on their AI costs. Sign up now and start optimizing!"
+                    }
                   </p>
                   <Button 
                     size="lg" 
                     variant="secondary"
-                    onClick={() => setActiveTab("chat")}
+                    onClick={() => user ? setActiveTab("chat") : navigate('/auth')}
                     className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg"
                   >
-                    Get Started – Go to Chat
+                    {user ? "Get Started – Go to Chat" : "Sign Up Now – It's Free"}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
@@ -71,8 +105,54 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="chat" className="mt-0">
-            <ChatInterface />
+            {user ? (
+              <ChatInterface />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center p-4">
+                <Card className="max-w-md w-full bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-xl">
+                  <CardContent className="p-8 text-center">
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl mb-6 mx-auto w-fit">
+                      <Shield className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                      Authentication Required
+                    </h2>
+                    <p className="text-gray-600 mb-6">
+                      Please sign in to access the AI Cost Optimization chat interface and start saving on your AI costs.
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/auth')}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
+                    >
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign In to Continue
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </TabsContent>
+
+          {user && (
+            <TabsContent value="profile" className="mt-0">
+              <div className="min-h-screen py-8">
+                <div className="container mx-auto px-4 max-w-2xl">
+                  <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                      Your Profile
+                    </h1>
+                    <p className="text-gray-600">
+                      Manage your account settings and view your optimization journey
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    <UserProfile user={user} />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 
