@@ -253,10 +253,11 @@ const ChatSidebar = ({ currentSessionId, onSessionSelect, onNewChat }: ChatSideb
                           e.stopPropagation();
                           handleDeleteSession(session.id);
                         }}
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600"
+                        className="h-8 w-8 p-0 text-black-600 hover:bg-purple-600 hover:text-white"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
+
                     </div>
                   )}
                 </div>

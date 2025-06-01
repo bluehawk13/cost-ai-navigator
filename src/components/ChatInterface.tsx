@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Send, Bot, User, Loader2, AlertCircle, Brain } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -72,7 +73,7 @@ const ChatInterface = () => {
       }
 
       const data = await response.json();
-      
+      console.log(data.response);
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: data.response || "I apologize, but I couldn't process your request. Please try again.",
@@ -167,7 +168,10 @@ const ChatInterface = () => {
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-900 border border-gray-200'
                     }`}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                      <div className="text-sm leading-relaxed prose max-w-none">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                      
                       <span className={`text-xs mt-1 block ${
                         message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                       }`}>
