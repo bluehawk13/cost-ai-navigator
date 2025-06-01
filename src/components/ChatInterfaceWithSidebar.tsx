@@ -134,7 +134,7 @@ const ChatInterfaceWithSidebar = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-6">
+        {/* <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-6">
           <div className="flex items-center justify-center space-x-3">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
               <Bot className="h-8 w-8 text-white" />
@@ -148,7 +148,7 @@ const ChatInterfaceWithSidebar = () => {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">

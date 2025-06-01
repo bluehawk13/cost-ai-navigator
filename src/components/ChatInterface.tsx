@@ -121,7 +121,7 @@ const ChatInterface = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-8">
+        {/* <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
               <Bot  className="h-8 w-8 text-white" />
@@ -136,7 +136,7 @@ const ChatInterface = () => {
           <Badge variant="secondary" className="mt-2 bg-green-100 text-green-700 border-green-200">
             🟢 Agent Online
           </Badge>
-        </div>
+        </div> */}
 
         {/* Chat Container */}
         <Card className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-xl">
