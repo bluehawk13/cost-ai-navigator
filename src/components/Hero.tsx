@@ -10,7 +10,7 @@ interface HeroProps {
 
 const Hero = ({ onGetStarted }: HeroProps) => {
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="pt-20 pb-0 relative overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-4xl mx-auto">
           <Badge variant="secondary" className="mb-6 bg-blue-100 text-blue-700 border-blue-200">
@@ -48,8 +48,8 @@ const Hero = ({ onGetStarted }: HeroProps) => {
           </div>
           
           {/* Key Benefits */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-            <div className="bg-white/60 backdrop-blur-sm rounded-lg p-6 border border-gray-200">
+          <div className="grid md:grid-cols-3 gap-6 max-w-10xl mx-auto">
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg pt-8 pb-8 pr-5 pl-5 border border-gray-200">
               <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto">
                 <TrendingDown className="h-6 w-6 text-green-600" />
               </div>
@@ -57,7 +57,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
               <p className="text-gray-600 text-sm">Reduce AI infrastructure costs through intelligent optimization</p>
             </div>
             
-            <div className="bg-white/60 backdrop-blur-sm rounded-lg p-6 border border-gray-200">
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg pt-8 pb-8 pr-5 pl-5  border border-gray-200">
               <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto">
                 <Zap className="h-6 w-6 text-blue-600" />
               </div>
@@ -65,7 +65,7 @@ const Hero = ({ onGetStarted }: HeroProps) => {
               <p className="text-gray-600 text-sm">Get real-time cost breakdowns and optimization recommendations</p>
             </div>
             
-            <div className="bg-white/60 backdrop-blur-sm rounded-lg p-6 border border-gray-200">
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg pt-8 pb-8 pr-5 pl-5 border border-gray-200">
               <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto">
                 <Sparkles className="h-6 w-6 text-purple-600" />
               </div>
