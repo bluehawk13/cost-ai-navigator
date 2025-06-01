@@ -72,7 +72,7 @@ const Index = () => {
       <main>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsContent value="home" className="mt-0">
-            <div className="space-y-20 pb-20">
+            <div className="space-y-20 pb-0">
               <Hero onGetStarted={() => user ? setActiveTab("chat") : navigate('/auth')} />
               <About />
               <Features />
