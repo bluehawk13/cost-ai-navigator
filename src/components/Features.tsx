@@ -145,29 +145,35 @@ const Features = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="h-8 w-8 text-green-600" />
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Save Time</h4>
-              <p className="text-gray-600">Automated analysis eliminates hours of manual cost research</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8 text-blue-600" />
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Reduce Risk</h4>
-              <p className="text-gray-600">Make informed decisions with comprehensive cost analysis</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="h-8 w-8 text-purple-600" />
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Scale Smart</h4>
-              <p className="text-gray-600">Optimize costs as you grow your AI implementations</p>
-            </div>
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6 text-center">
+                <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-8 w-8 text-green-600" />
+                </div>
+                <h4 className="text-xl font-bold text-gray-900 mb-2">Save Time</h4>
+                <p className="text-gray-600">Automated analysis eliminates hours of manual cost research</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6 text-center">
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="h-8 w-8 text-blue-600" />
+                </div>
+                <h4 className="text-xl font-bold text-gray-900 mb-2">Reduce Risk</h4>
+                <p className="text-gray-600">Make informed decisions with comprehensive cost analysis</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6 text-center">
+                <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="h-8 w-8 text-purple-600" />
+                </div>
+                <h4 className="text-xl font-bold text-gray-900 mb-2">Scale Smart</h4>
+                <p className="text-gray-600">Optimize costs as you grow your AI implementations</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
