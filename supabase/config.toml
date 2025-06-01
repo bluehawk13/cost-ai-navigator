@@ -1,1 +1,2 @@
-project_id = "jxuuuzfndttyvbopeotc"
+[project]
+id = "${SUPABASE_PROJECT_ID}"

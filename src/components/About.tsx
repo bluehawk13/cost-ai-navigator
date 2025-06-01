@@ -8,14 +8,16 @@ const About = () => {
     <section id="about" className="pt-10 pb-5 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-20">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">
-            Meet Your AI Cost Optimization Manager Agent
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Our intelligent agent orchestrates a network of specialized sub-agents to analyze, optimize, 
-            and streamline your AI infrastructure costs. Think of it as your dedicated AI finance team 
-            that never sleeps.
-          </p>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-xl text-white">
+            <h2 className="text-4xl font-bold text-black mb-6">
+              Meet Your AI Cost Optimization Manager Agent
+            </h2>
+            <p className="text-xl text-white-600 max-w-3xl mx-auto leading-relaxed">
+              Our intelligent agent orchestrates a network of specialized sub-agents to analyze, optimize, 
+              and streamline your AI infrastructure costs. Think of it as your dedicated AI finance team 
+              that never sleeps.
+            </p>
+          </div>
         </div>
         
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
