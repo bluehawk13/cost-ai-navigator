@@ -1,8 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Send, Bot, User, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
@@ -136,31 +134,14 @@ const ChatInterfaceWithSidebar = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        {/* <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-6">
-          <div className="flex items-center justify-center space-x-3">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
-              <Bot className="h-8 w-8 text-white" />
-            </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                AI Cost Optimization Chat
-              </h1>
-              <p className="text-gray-600 text-sm">
-                Get instant insights on AI costs, ROI analysis, and optimization strategies
-              </p>
-            </div>
-          </div>
-        </div> */}
-
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex w-full ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-2xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+              <div className={`flex items-start space-x-3 w-full max-w-3xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                 {/* Avatar */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.sender === 'user' 
@@ -175,27 +156,27 @@ const ChatInterfaceWithSidebar = () => {
                 </div>
                 
                 {/* Message Bubble */}
-                <div className={`rounded-lg p-4 ${
+                <div className={`rounded-lg p-4 max-w-full w-auto ${
                   message.sender === 'user'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                 }`}>
-                  {/* <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p> */}
                   <div className="text-sm leading-relaxed prose max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}
-    rehypePlugins={[rehypeRaw]}
-    components={{
-      h1: ({ node, ...props }) => <h1 className="mt-6 mb-2 text-2xl font-bold" {...props} />,
-      h2: ({ node, ...props }) => <h2 className="mt-6 mb-2 text-xl font-semibold" {...props} />,
-      h3: ({ node, ...props }) => <h3 className="mt-6 mb-2 text-lg font-medium" {...props} />,
-      p: ({ node, ...props }) => <p className="mb-3" {...props} />,
-      ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-3" {...props} />,
-      ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-3" {...props} />,
-    }}
-    >
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]} 
+                      rehypePlugins={[rehypeRaw]}
+                      components={{
+                        h1: ({ node, ...props }) => <h1 className="mt-6 mb-2 text-2xl font-bold" {...props} />,
+                        h2: ({ node, ...props }) => <h2 className="mt-6 mb-2 text-xl font-semibold" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="mt-6 mb-2 text-lg font-medium" {...props} />,
+                        p: ({ node, ...props }) => <p className="mb-3" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-3" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-3" {...props} />,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                   <span className={`text-xs mt-2 block ${
                     message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>
