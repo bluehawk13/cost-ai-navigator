@@ -54,16 +54,16 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_AGENT_API_URL!, {
+      const response = await fetch(process.env.VITE_AGENT_API_URL!, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.NEXT_PUBLIC_AGENT_API_KEY!,
+          'x-api-key': process.env.VITE_AGENT_API_KEY!,
         },
         body: JSON.stringify({
-          user_id: process.env.NEXT_PUBLIC_DEFAULT_USER_EMAIL,
-          agent_id: process.env.NEXT_PUBLIC_AGENT_ID,
-          session_id: process.env.NEXT_PUBLIC_SESSION_ID,
+          user_id: process.env.VITE_DEFAULT_USER_EMAIL,
+          agent_id: process.env.VITE_AGENT_ID,
+          session_id: process.env.VITE_SESSION_ID,
           message: inputMessage
         })
       });
