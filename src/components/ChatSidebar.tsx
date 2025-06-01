@@ -155,7 +155,7 @@ const ChatSidebar = ({ currentSessionId, onSessionSelect, onNewChat }: ChatSideb
   return (
     <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-8 border-b border-gray-200">
         <Button
           onClick={onNewChat}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"

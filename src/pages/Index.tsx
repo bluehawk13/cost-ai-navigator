@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Zap, Target, BarChart3, Cog, MessageSquare, ArrowRight, Star, Shield, Users, User, LogIn } from 'lucide-react';
+import { Bot, Zap, Target, BarChart3, Cog, MessageSquare, ArrowRight, Star, Shield, Users, User, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ChatInterfaceWithSidebar from '@/components/ChatInterfaceWithSidebar';
 import Hero from '@/components/Hero';
@@ -22,7 +22,7 @@ const Index = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl mb-4 mx-auto w-fit">
-            <Brain className="h-8 w-8 text-white animate-pulse" />
+            <Bot  className="h-8 w-8 text-white animate-pulse" />
           </div>
           <p className="text-gray-600">Loading...</p>
         </div>
@@ -38,7 +38,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                <Brain className="h-6 w-6 text-white" />
+                <Bot className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 AI Cost Optimizer
@@ -163,7 +163,7 @@ const Index = () => {
               <div>
                 <div className="flex items-center space-x-2 mb-4">
                   <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                    <Brain className="h-5 w-5 text-white" />
+                    <Bot className="h-5 w-5 text-white" />
                   </div>
                   <span className="text-lg font-bold">AI Cost Optimizer</span>
                 </div>

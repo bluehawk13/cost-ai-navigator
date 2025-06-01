@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User, Loader2, AlertCircle, Brain } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { useChatSession } from '@/hooks/useChatSession';
@@ -137,7 +137,7 @@ const ChatInterfaceWithSidebar = () => {
         <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-6">
           <div className="flex items-center justify-center space-x-3">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
-              <Brain className="h-8 w-8 text-white" />
+              <Bot className="h-8 w-8 text-white" />
             </div>
             <div className="text-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">

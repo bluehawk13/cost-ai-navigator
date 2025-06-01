@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User, Loader2, AlertCircle, Brain } from 'lucide-react';
+import { Send, Bot, User, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import ReactMarkdown from 'react-markdown';
@@ -124,7 +124,7 @@ const ChatInterface = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
-              <Brain className="h-8 w-8 text-white" />
+              <Bot  className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               AI Cost Optimization Chat

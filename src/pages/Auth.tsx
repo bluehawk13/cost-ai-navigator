@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Brain, Mail, Lock, User, ArrowRight, Shield, Sparkles } from 'lucide-react';
+import {Bot , Mail, Lock, User, ArrowRight, Shield, Sparkles } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
@@ -123,7 +123,7 @@ const Auth = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
-              <Brain className="h-8 w-8 text-white" />
+              <Bot className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               AI Cost Optimizer

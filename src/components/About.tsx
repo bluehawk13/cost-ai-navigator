@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Network, Shield, Target } from 'lucide-react';
+import { Bot, Network, Shield, Target } from 'lucide-react';
 
 const About = () => {
   return (
@@ -32,7 +32,7 @@ const About = () => {
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <div className="bg-blue-100 p-2 rounded-lg">
-                  <Brain className="h-5 w-5 text-blue-600" />
+                  <Bot className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Intelligent Query Routing</h4>
