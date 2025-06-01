@@ -53,20 +53,20 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
+      const response = await fetch(process.env.NEXT_PUBLIC_AGENT_API_URL!, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': 'sk-default-gLsaQsiInbLlKDdFTxKqVtaBvrSIeTIk'
+          'x-api-key': process.env.NEXT_PUBLIC_AGENT_API_KEY!,
         },
         body: JSON.stringify({
-          user_id: user?.email || "anonymous@example.com",
-          agent_id: "683c3a403b7c57f1745cef6c",
-          session_id: `${user?.id || 'anonymous'}-${Date.now()}`,
+          user_id: process.env.NEXT_PUBLIC_DEFAULT_USER_EMAIL,
+          agent_id: process.env.NEXT_PUBLIC_AGENT_ID,
+          session_id: process.env.NEXT_PUBLIC_SESSION_ID,
           message: inputMessage
         })
       });
-
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
