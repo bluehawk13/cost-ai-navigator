@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatSidebar from './ChatSidebar';
 import TableChart from './TableChart';
+import DashboardRenderer from './DashboardRenderer';
 import { detectTablesInText } from '@/utils/tableDetector';
 
 const ChatInterfaceWithSidebar = () => {
@@ -137,10 +137,6 @@ const ChatInterfaceWithSidebar = () => {
     
     if (tables.length > 0) {
       // Split content by table positions to render text and tables separately
-      const parts = [];
-      let lastIndex = 0;
-      
-      // For simplicity, show text first then all tables
       const textParts = message.content.split('\n').filter((line: string) => {
         const hasTableMarkers = line.includes('|') || /\s{3,}/.test(line);
         return !hasTableMarkers || line.trim().length === 0;
@@ -149,9 +145,9 @@ const ChatInterfaceWithSidebar = () => {
       return (
         <div>
           {textParts.length > 0 && (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap mb-4">
-              {textParts.join('\n')}
-            </p>
+            <div className="mb-4">
+              <DashboardRenderer content={textParts.join('\n')} />
+            </div>
           )}
           {tables.map((table, index) => (
             <TableChart key={index} table={table} index={index} />
@@ -161,7 +157,7 @@ const ChatInterfaceWithSidebar = () => {
     }
     
     return (
-      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+      <DashboardRenderer content={message.content} />
     );
   };
 
