@@ -21,6 +21,7 @@ const ChatInterfaceWithSidebar = () => {
     saveMessage,
     updateSessionTitle,
     setMessages,
+    clearCurrentSession,
   } = useChatSession();
 
   const [inputMessage, setInputMessage] = useState('');
@@ -37,15 +38,20 @@ const ChatInterfaceWithSidebar = () => {
   }, [messages]);
 
   const handleNewChat = async () => {
+    // Clear current session first
+    clearCurrentSession();
+    // Then create new session
     await createNewSession();
   };
 
   const handleSessionSelect = async (sessionId: string) => {
+    // Clear current session before loading new one
+    clearCurrentSession();
     await loadSession(sessionId);
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || !user) return;
 
     let sessionId = currentSessionId;
     
@@ -64,12 +70,14 @@ const ChatInterfaceWithSidebar = () => {
     await saveMessage(userMessageContent, 'user');
 
     // Update session title with first user message if it's still "New Chat"
-    const isFirstMessage = messages.length <= 1;
+    const nonWelcomeMessages = messages.filter(msg => !msg.id.startsWith('welcome-'));
+    const isFirstMessage = nonWelcomeMessages.length <= 1;
     if (isFirstMessage && sessionId) {
       await updateSessionTitle(sessionId, userMessageContent);
     }
 
     try {
+      // Use the actual database session ID for the API call
       const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
         method: 'POST',
         headers: {
@@ -79,7 +87,7 @@ const ChatInterfaceWithSidebar = () => {
         body: JSON.stringify({
           user_id: user?.email || "anonymous@example.com",
           agent_id: "683c3a403b7c57f1745cef6c",
-          session_id: `${user?.id || 'anonymous'}-${sessionId}`,
+          session_id: sessionId, // Use the actual database session ID
           message: userMessageContent
         })
       });
@@ -146,6 +154,9 @@ const ChatInterfaceWithSidebar = () => {
               <p className="text-gray-600 text-sm">
                 Get instant insights on AI costs, ROI analysis, and optimization strategies
               </p>
+              {currentSessionId && (
+                <p className="text-xs text-gray-500 mt-1">Session: {currentSessionId.slice(0, 8)}...</p>
+              )}
             </div>
           </div>
         </div>
@@ -181,7 +192,7 @@ const ChatInterfaceWithSidebar = () => {
                   <span className={`text-xs mt-2 block ${
                     message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>
-                    {message.id !== 'welcome' ? formatTime(message.created_at) : 'Now'}
+                    {!message.id.startsWith('welcome-') ? formatTime(message.created_at) : 'Now'}
                   </span>
                 </div>
               </div>

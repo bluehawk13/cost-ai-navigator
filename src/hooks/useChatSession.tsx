@@ -40,8 +40,18 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
-      setCurrentSessionId(data.id);
+      // Clear messages and set new session
       setMessages([]);
+      setCurrentSessionId(data.id);
+      
+      // Add welcome message for new session
+      const welcomeMessage: Message = {
+        id: 'welcome-' + data.id,
+        content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
+        sender: 'assistant',
+        created_at: new Date().toISOString()
+      };
+      setMessages([welcomeMessage]);
       
       return data.id;
     } catch (error: any) {
@@ -69,6 +79,9 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
+      // Clear current messages first
+      setMessages([]);
+      
       // Ensure proper typing for messages
       const typedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
@@ -79,6 +92,17 @@ export const useChatSession = () => {
 
       setMessages(typedMessages);
       setCurrentSessionId(sessionId);
+      
+      // If no messages in session, show welcome message
+      if (typedMessages.length === 0) {
+        const welcomeMessage: Message = {
+          id: 'welcome-' + sessionId,
+          content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
+          sender: 'assistant',
+          created_at: new Date().toISOString()
+        };
+        setMessages([welcomeMessage]);
+      }
     } catch (error: any) {
       console.error('Error loading session:', error);
       toast({
@@ -151,17 +175,11 @@ export const useChatSession = () => {
     }
   };
 
-  // Initialize with welcome message if no session
-  useEffect(() => {
-    if (!currentSessionId && user) {
-      setMessages([{
-        id: 'welcome',
-        content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
-        sender: 'assistant',
-        created_at: new Date().toISOString()
-      }]);
-    }
-  }, [currentSessionId, user]);
+  // Clear current session and messages when switching sessions
+  const clearCurrentSession = () => {
+    setCurrentSessionId(null);
+    setMessages([]);
+  };
 
   return {
     currentSessionId,
@@ -172,5 +190,6 @@ export const useChatSession = () => {
     saveMessage,
     updateSessionTitle,
     setMessages,
+    clearCurrentSession,
   };
 };
