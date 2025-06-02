@@ -119,6 +119,11 @@ export const useChatSession = () => {
   const saveMessage = async (content: string, sender: 'user' | 'assistant') => {
     if (!currentSessionId || !user) return null;
 
+    // Skip saving welcome messages to database
+    if (content.includes("I'm your AI Cost Optimization Manager Agent")) {
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('messages')
