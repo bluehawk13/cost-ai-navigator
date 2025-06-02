@@ -70,20 +70,35 @@ const ChatInterfaceWithSidebar = () => {
       await updateSessionTitle(sessionId, userMessageContent);
     }
 
+    // try {
+    //   const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'x-api-key': import.env.
+    //     },
+    //     body: JSON.stringify({
+    //       user_id: user?.email || "anonymous@example.com",
+    //       agent_id: "683c3a403b7c57f1745cef6c",
+    //       session_id: `${user?.id || 'anonymous'}-${sessionId}`,
+    //       message: userMessageContent
+    //     })
+    //   });
     try {
-      const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
+      const response = await fetch(import.meta.env.VITE_AGENT_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': 'sk-default-gLsaQsiInbLlKDdFTxKqVtaBvrSIeTIk'
+          'x-api-key': import.meta.env.VITE_AGENT_API_KEY
         },
         body: JSON.stringify({
-          user_id: user?.email || "anonymous@example.com",
-          agent_id: "683c3a403b7c57f1745cef6c",
-          session_id: `${user?.id || 'anonymous'}-${sessionId}`,
+          user_id: import.meta.env.VITE_DEFAULT_USER_EMAIL,
+          agent_id: import.meta.env.VITE_AGENT_ID,
+          session_id: import.meta.env.VITE_SESSION_ID,
           message: userMessageContent
         })
       });
+    
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
