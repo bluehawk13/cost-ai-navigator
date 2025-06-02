@@ -9,6 +9,8 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatSidebar from './ChatSidebar';
+import TableChart from './TableChart';
+import { detectTablesInText } from '@/utils/tableDetector';
 
 const ChatInterfaceWithSidebar = () => {
   const { user } = useAuth();
@@ -130,6 +132,39 @@ const ChatInterfaceWithSidebar = () => {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const renderMessageContent = (message: any) => {
+    const tables = detectTablesInText(message.content);
+    
+    if (tables.length > 0) {
+      // Split content by table positions to render text and tables separately
+      const parts = [];
+      let lastIndex = 0;
+      
+      // For simplicity, show text first then all tables
+      const textParts = message.content.split('\n').filter((line: string) => {
+        const hasTableMarkers = line.includes('|') || /\s{3,}/.test(line);
+        return !hasTableMarkers || line.trim().length === 0;
+      });
+      
+      return (
+        <div>
+          {textParts.length > 0 && (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap mb-4">
+              {textParts.join('\n')}
+            </p>
+          )}
+          {tables.map((table, index) => (
+            <TableChart key={index} table={table} index={index} />
+          ))}
+        </div>
+      );
+    }
+    
+    return (
+      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
@@ -168,7 +203,7 @@ const ChatInterfaceWithSidebar = () => {
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-2xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-4xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                 {/* Avatar */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.sender === 'user' 
@@ -188,7 +223,11 @@ const ChatInterfaceWithSidebar = () => {
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                 }`}>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  {message.sender === 'user' ? (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  ) : (
+                    renderMessageContent(message)
+                  )}
                   <span className={`text-xs mt-2 block ${
                     message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>

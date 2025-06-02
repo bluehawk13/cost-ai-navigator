@@ -53,6 +53,12 @@ export const useChatSession = () => {
       };
       setMessages([welcomeMessage]);
       
+      // Force a session list refresh by triggering realtime update
+      await supabase
+        .from('chat_sessions')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', data.id);
+      
       return data.id;
     } catch (error: any) {
       console.error('Error creating session:', error);
