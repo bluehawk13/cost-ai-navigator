@@ -1,8 +1,9 @@
 # AI Agent Orchestrator System
 
-[![YouTube Demo](https://img.shields.io/badge/YouTube-Demo-red)]([https://www.youtube.com/watch?v=demo](https://www.youtube.com/watch?v=9X5VKs_GZ9M))
-[![Live Website](https://img.shields.io/badge/Live-Website-green)]([https://yourapp.com](https://al-cost-optimization-advisor-agent.vercel.app/))
+[![YouTube Demo](https://img.shields.io/badge/YouTube-Demo-red)](https://www.youtube.com/watch?v=9X5VKs_GZ9M&t=1s)
+[![Live Website](https://img.shields.io/badge/Live-Website-green)](https://al-cost-optimization-advisor-agent.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 ## Overview
 
