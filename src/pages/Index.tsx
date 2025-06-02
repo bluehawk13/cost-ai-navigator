@@ -9,7 +9,7 @@ import ChatInterfaceWithSidebar from '@/components/ChatInterfaceWithSidebar';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import About from '@/components/About';
-import UserProfile from '@/components/UserProfile';
+import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
@@ -47,14 +47,15 @@ const Index = () => {
             
             <div className="flex items-center space-x-4">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="home">Home</TabsTrigger>
                   <TabsTrigger value="chat">Chat</TabsTrigger>
-                  {user && <TabsTrigger value="profile">Profile</TabsTrigger>}
                 </TabsList>
               </Tabs>
               
-              {!user && (
+              {user ? (
+                <UserMenu user={user} />
+              ) : (
                 <Button 
                   onClick={() => navigate('/auth')}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -131,27 +132,6 @@ const Index = () => {
               </div>
             )}
           </TabsContent>
-
-          {user && (
-            <TabsContent value="profile" className="mt-0">
-              <div className="min-h-screen py-8">
-                <div className="container mx-auto px-4 max-w-2xl">
-                  <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                      Your Profile
-                    </h1>
-                    <p className="text-gray-600">
-                      Manage your account settings and view your optimization journey
-                    </p>
-                  </div>
-                  
-                  <div className="flex justify-center">
-                    <UserProfile user={user} />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          )}
         </Tabs>
       </main>
 

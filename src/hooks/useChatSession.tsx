@@ -69,7 +69,15 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
-      setMessages(data || []);
+      // Ensure proper typing for messages
+      const typedMessages: Message[] = (data || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        sender: msg.sender as 'user' | 'assistant',
+        created_at: msg.created_at
+      }));
+
+      setMessages(typedMessages);
       setCurrentSessionId(sessionId);
     } catch (error: any) {
       console.error('Error loading session:', error);
@@ -100,8 +108,15 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
-      // Add to local state
-      setMessages(prev => [...prev, data]);
+      // Add to local state with proper typing
+      const newMessage: Message = {
+        id: data.id,
+        content: data.content,
+        sender: data.sender as 'user' | 'assistant',
+        created_at: data.created_at
+      };
+
+      setMessages(prev => [...prev, newMessage]);
 
       // Update session timestamp
       await supabase
@@ -109,7 +124,7 @@ export const useChatSession = () => {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', currentSessionId);
 
-      return data;
+      return newMessage;
     } catch (error: any) {
       console.error('Error saving message:', error);
       toast({
