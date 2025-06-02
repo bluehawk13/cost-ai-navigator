@@ -35,6 +35,32 @@ const ChatSidebar = ({ currentSessionId, onSessionSelect, onNewChat }: ChatSideb
     }
   }, [user]);
 
+  // Add real-time listener for sessions
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('chat_sessions_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_sessions',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Session change:', payload);
+          fetchSessions(); // Refresh sessions when changes occur
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchSessions = async () => {
     if (!user) return;
 
@@ -177,7 +203,7 @@ const ChatSidebar = ({ currentSessionId, onSessionSelect, onNewChat }: ChatSideb
           sessions.map((session) => (
             <Card
               key={session.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+              className={`cursor-pointer transition-all duration-200 hover:shadow-md group ${
                 currentSessionId === session.id
                   ? 'bg-blue-50 border-blue-200 shadow-sm'
                   : 'bg-white hover:bg-gray-50'
@@ -187,7 +213,7 @@ const ChatSidebar = ({ currentSessionId, onSessionSelect, onNewChat }: ChatSideb
                 <div className="flex items-center justify-between">
                   <div 
                     className="flex-1 min-w-0"
-                    onClick={() => onSessionSelect(session.id)}
+                    onClick={() => editingSession !== session.id && onSessionSelect(session.id)}
                   >
                     {editingSession === session.id ? (
                       <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>

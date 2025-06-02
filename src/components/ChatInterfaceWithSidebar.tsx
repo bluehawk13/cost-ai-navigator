@@ -7,6 +7,8 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatSidebar from './ChatSidebar';
+import TableChart from './TableChart';
+import { detectTablesInText } from '@/utils/tableDetector';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import ReactMarkdown from 'react-markdown';
@@ -22,6 +24,7 @@ const ChatInterfaceWithSidebar = () => {
     saveMessage,
     updateSessionTitle,
     setMessages,
+    clearCurrentSession,
   } = useChatSession();
 
   const [inputMessage, setInputMessage] = useState('');
@@ -38,15 +41,20 @@ const ChatInterfaceWithSidebar = () => {
   }, [messages]);
 
   const handleNewChat = async () => {
+    // Clear current session first
+    clearCurrentSession();
+    // Then create new session
     await createNewSession();
   };
 
   const handleSessionSelect = async (sessionId: string) => {
+    // Clear current session before loading new one
+    clearCurrentSession();
     await loadSession(sessionId);
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || !user) return;
 
     let sessionId = currentSessionId;
     
@@ -65,7 +73,8 @@ const ChatInterfaceWithSidebar = () => {
     await saveMessage(userMessageContent, 'user');
 
     // Update session title with first user message if it's still "New Chat"
-    const isFirstMessage = messages.length <= 1;
+    const nonWelcomeMessages = messages.filter(msg => !msg.id.startsWith('welcome-'));
+    const isFirstMessage = nonWelcomeMessages.length <= 1;
     if (isFirstMessage && sessionId) {
       await updateSessionTitle(sessionId, userMessageContent);
     }
@@ -124,6 +133,44 @@ const ChatInterfaceWithSidebar = () => {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const renderMessageContent = (message: any) => {
+    const tables = detectTablesInText(message.content);
+    
+    if (tables.length > 0) {
+      // Split content by table positions to render text and tables separately
+      const parts = [];
+      let lastIndex = 0;
+      
+      // For simplicity, show text first then all tables
+      const textParts = message.content.split('\n').filter((line: string) => {
+        const hasTableMarkers = line.includes('|') || /\s{3,}/.test(line);
+        return !hasTableMarkers || line.trim().length === 0;
+      });
+      
+      return (
+        <div>
+          {textParts.length > 0 && (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap mb-4">
+              {textParts.join('\n')}
+            </p>
+          )}
+          {tables.map((table, index) => (
+            <TableChart key={index} table={table} index={index} />
+          ))}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      {message.content}
+      </ReactMarkdown>
+    </div>
+     
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
@@ -162,7 +209,8 @@ const ChatInterfaceWithSidebar = () => {
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                 }`}>
-                  <div className="text-sm leading-relaxed prose max-w-none">
+                 
+                    <div className="text-sm leading-relaxed prose max-w-none">
                     <ReactMarkdown 
                       remarkPlugins={[remarkGfm]} 
                       rehypePlugins={[rehypeRaw]}
@@ -178,10 +226,13 @@ const ChatInterfaceWithSidebar = () => {
                       {message.content}
                     </ReactMarkdown>
                   </div>
+                  
+
+                  
                   <span className={`text-xs mt-2 block ${
                     message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>
-                    {message.id !== 'welcome' ? formatTime(message.created_at) : 'Now'}
+                    {!message.id.startsWith('welcome-') ? formatTime(message.created_at) : 'Now'}
                   </span>
                 </div>
               </div>

@@ -40,8 +40,24 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
-      setCurrentSessionId(data.id);
+      // Clear messages and set new session
       setMessages([]);
+      setCurrentSessionId(data.id);
+      
+      // Add welcome message for new session
+      const welcomeMessage: Message = {
+        id: 'welcome-' + data.id,
+        content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
+        sender: 'assistant',
+        created_at: new Date().toISOString()
+      };
+      setMessages([welcomeMessage]);
+      
+      // Force a session list refresh by triggering realtime update
+      await supabase
+        .from('chat_sessions')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', data.id);
       
       return data.id;
     } catch (error: any) {
@@ -69,8 +85,30 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
-      setMessages(data || []);
+      // Clear current messages first
+      setMessages([]);
+      
+      // Ensure proper typing for messages
+      const typedMessages: Message[] = (data || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        sender: msg.sender as 'user' | 'assistant',
+        created_at: msg.created_at
+      }));
+
+      setMessages(typedMessages);
       setCurrentSessionId(sessionId);
+      
+      // If no messages in session, show welcome message
+      if (typedMessages.length === 0) {
+        const welcomeMessage: Message = {
+          id: 'welcome-' + sessionId,
+          content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
+          sender: 'assistant',
+          created_at: new Date().toISOString()
+        };
+        setMessages([welcomeMessage]);
+      }
     } catch (error: any) {
       console.error('Error loading session:', error);
       toast({
@@ -87,6 +125,11 @@ export const useChatSession = () => {
   const saveMessage = async (content: string, sender: 'user' | 'assistant') => {
     if (!currentSessionId || !user) return null;
 
+    // Skip saving welcome messages to database
+    if (content.includes("I'm your AI Cost Optimization Manager Agent")) {
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -100,8 +143,15 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
-      // Add to local state
-      setMessages(prev => [...prev, data]);
+      // Add to local state with proper typing
+      const newMessage: Message = {
+        id: data.id,
+        content: data.content,
+        sender: data.sender as 'user' | 'assistant',
+        created_at: data.created_at
+      };
+
+      setMessages(prev => [...prev, newMessage]);
 
       // Update session timestamp
       await supabase
@@ -109,7 +159,7 @@ export const useChatSession = () => {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', currentSessionId);
 
-      return data;
+      return newMessage;
     } catch (error: any) {
       console.error('Error saving message:', error);
       toast({
@@ -136,17 +186,11 @@ export const useChatSession = () => {
     }
   };
 
-  // Initialize with welcome message if no session
-  useEffect(() => {
-    if (!currentSessionId && user) {
-      setMessages([{
-        id: 'welcome',
-        content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
-        sender: 'assistant',
-        created_at: new Date().toISOString()
-      }]);
-    }
-  }, [currentSessionId, user]);
+  // Clear current session and messages when switching sessions
+  const clearCurrentSession = () => {
+    setCurrentSessionId(null);
+    setMessages([]);
+  };
 
   return {
     currentSessionId,
@@ -157,5 +201,6 @@ export const useChatSession = () => {
     saveMessage,
     updateSessionTitle,
     setMessages,
+    clearCurrentSession,
   };
 };
