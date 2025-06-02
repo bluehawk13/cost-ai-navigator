@@ -1,73 +1,165 @@
-# Welcome to your Lovable project
+# AI Agent Orchestrator System
 
-## Project info
+[![YouTube Demo](https://img.shields.io/badge/YouTube-Demo-red)]([https://www.youtube.com/watch?v=demo](https://www.youtube.com/watch?v=9X5VKs_GZ9M))
+[![Live Website](https://img.shields.io/badge/Live-Website-green)]([https://yourapp.com](https://al-cost-optimization-advisor-agent.vercel.app/))
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**URL**: https://lovable.dev/projects/3aa8b088-1a91-4875-91d9-14bd5e3b8765
+## Overview
 
-## How can I edit this code?
+The AI Agent Orchestrator is an intelligent routing system that analyzes user queries and directs them to specialized sub-agents for optimal response generation. It serves as the central dispatcher that understands intent but delegates actual response generation to domain-specific agents.
 
-There are several ways of editing your application.
+## Key Features
 
-**Use Lovable**
+- **Intent Recognition**: Precisely identifies user needs from queries
+- **Smart Routing**: Directs requests to the most appropriate sub-agent
+- **Response Synthesis**: Combines multi-agent outputs when needed
+- **Modular Architecture**: Easy to extend with new specialized agents
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3aa8b088-1a91-4875-91d9-14bd5e3b8765) and start prompting.
+## Sub-Agent Ecosystem
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🤖 LLM Selection and Cost Comparison Agent
 
-**Use your preferred IDE**
+**Purpose**: Helps users select the optimal LLM and deployment architecture based on their specific requirements.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+**Capabilities**:
+- Compares LLMs across major providers (OpenAI, Anthropic, Google, AWS)
+- Evaluates 3 variants per provider (e.g., different model sizes)
+- Provides detailed comparisons of:
+  - Runtime duration
+  - Monthly token costs
+  - Tokens per dollar value
+  - Response latency
+  - Model quality ratings (1-10 scale)
+- Recommends best options for:
+  - Overall performance
+  - Cost efficiency
+  - Speed
+  - Preferred balance
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Output Includes**:
+- High-level deployment architecture suggestions
+- Serverless vs containerized recommendations
+- Caching strategies
 
-Follow these steps:
+### 💸 Agent Cost Consumer Explainer Agent
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+**Purpose**: Explains token consumption patterns and cost-saving strategies for AI operations.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+**Detailed Breakdown**:
+- Token usage per action type:
+  - Retrieval operations (RAG)
+  - Long prompts vs short prompts
+  - Tool/function calling
+  - Streaming vs bulk output
+  - Long context vs short context windows
+- Credit/token consumption estimates per behavior
+- Cost optimization strategies:
+  - Prompt compression techniques
+  - Function chaining approaches
+  - Token limit configurations
+  - Caching implementations
 
-# Step 3: Install the necessary dependencies.
-npm i
+**Output Includes**:
+- Behavior cost simulations
+- Usage pattern analysis
+- Token efficiency recommendations
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### 📈 ROI Calculator Agent
 
-**Edit a file directly in GitHub**
+**Purpose**: Quantifies the financial impact of AI implementation for business stakeholders.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+**Financial Analysis**:
+- Compares manual process costs vs AI-powered costs
+- Converts time savings into dollar values
+- Incorporates model and infrastructure costs
+- Generates comprehensive reports showing:
+  - ROI percentage
+  - Payback period
+  - Net monthly/quarterly savings
+  - Break-even timeline
 
-**Use GitHub Codespaces**
+**Recommendations Include**:
+- Scaling guidance for pilot programs
+- Identification of highest-ROI use cases
+- Implementation priority suggestions
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### ⚙️ Business Automation Helper Agent
 
-## What technologies are used for this project?
+**Purpose**: Identifies automation opportunities across organizational functions.
 
-This project is built with:
+**Departmental Analysis**:
+- Evaluates automation potential in:
+  - HR processes
+  - Financial operations
+  - Customer support
+  - Sales workflows
+  - Operational tasks
+- Scores each use case by:
+  - Implementation complexity
+  - Cost-saving potential
+  - LLM suitability (basic/advanced/generative needs)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**Output Includes**:
+- Recommended pilot use cases
+- Next-step routing suggestions
+- Workflow automation blueprints
 
-## How can I deploy this project?
+## System Architecture
 
-Simply open [Lovable](https://lovable.dev/projects/3aa8b088-1a91-4875-91d9-14bd5e3b8765) and click on Share -> Publish.
+The orchestrator follows a hub-and-spoke model:
+1. User query enters the central Orchestrator
+2. Intent analysis determines optimal sub-agent
+3. Query routed to appropriate specialist agent
+4. Agent response returned to Orchestrator
+5. Final response delivered to user
 
-## Can I connect a custom domain to my Lovable project?
+For complex queries requiring multiple agents:
+- Orchestrator coordinates parallel processing
+- Synthesizes responses into unified answer
+- Maintains response consistency
 
-Yes, you can!
+## Installation
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Clone the repository
+2. Install required dependencies
+3. Configure API keys and endpoints
+4. Initialize the orchestrator service
+5. Connect to frontend interface
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Usage Examples
+
+**Scenario 1**: LLM Selection
+- User query: "Need fastest LLM for real-time translations under $800/month"
+- Routing: → 🤖 LLM Selection Agent
+- Output: Model recommendations with latency/cost tradeoffs
+
+**Scenario 2**: Cost Explanation
+- User query: "Why are my function calls so expensive?"
+- Routing: → 💸 Cost Explainer Agent
+- Output: Token consumption breakdown + optimization tips
+
+**Scenario 3**: Automation Planning
+- User query: "Where can we automate in our accounting department?"
+- Routing: → ⚙️ Automation Helper Agent
+- Output: Prioritized list of automatable workflows
+
+## License
+
+MIT License - Free for open and commercial use with attribution
+
+## Contributing
+
+We welcome contributions through:
+- Bug reports
+- Feature requests
+- Documentation improvements
+- Code submissions
+
+Please follow standard GitHub pull request processes.
+
+## Support
+
+For assistance, please:
+- Open an issue in this repository
+- Contact us through our website
+- Reference the relevant sub-agent in your query
