@@ -69,21 +69,7 @@ const ChatInterfaceWithSidebar = () => {
     if (isFirstMessage && sessionId) {
       await updateSessionTitle(sessionId, userMessageContent);
     }
-
-    // try {
-    //   const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'x-api-key': import.env.
-    //     },
-    //     body: JSON.stringify({
-    //       user_id: user?.email || "anonymous@example.com",
-    //       agent_id: "683c3a403b7c57f1745cef6c",
-    //       session_id: `${user?.id || 'anonymous'}-${sessionId}`,
-    //       message: userMessageContent
-    //     })
-    //   });
+    
     try {
       const response = await fetch(import.meta.env.VITE_AGENT_API_URL, {
         method: 'POST',
