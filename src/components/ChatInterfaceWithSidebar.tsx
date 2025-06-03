@@ -154,6 +154,7 @@ const ChatInterfaceWithSidebar = () => {
     const viewMode = messageViewModes[message.id] || 'text';
     
     if (viewMode === 'dashboard') {
+      // In dashboard view, don't show tables separately - they're handled within DashboardRenderer
       return <DashboardRenderer content={message.content} />;
     }
     

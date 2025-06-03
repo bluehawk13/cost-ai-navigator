@@ -167,36 +167,6 @@ const DashboardRenderer = ({ content }: { content: string }) => {
           ))}
         </div>
       )}
-
-      {/* Additional unstructured content */}
-      {parsedData.remainingText && (
-        <Card className="bg-gray-50 border-l-4 border-l-gray-400">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium text-gray-900 flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              Additional Context
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="prose max-w-none text-sm leading-relaxed">
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm]} 
-                rehypePlugins={[rehypeRaw]}
-                components={{
-                  h1: ({ node, ...props }) => <h1 className="mt-4 mb-2 text-lg font-bold" {...props} />,
-                  h2: ({ node, ...props }) => <h2 className="mt-4 mb-2 text-base font-semibold" {...props} />,
-                  h3: ({ node, ...props }) => <h3 className="mt-4 mb-2 text-sm font-medium" {...props} />,
-                  p: ({ node, ...props }) => <p className="mb-2 text-gray-700" {...props} />,
-                  ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
-                  ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
-                }}
-              >
-                {parsedData.remainingText}
-              </ReactMarkdown>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
