@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +54,7 @@ const iconMap: { [key: string]: any } = {
 const DashboardRenderer = ({ content }: { content: string }) => {
   const dashboardData = parseDashboardContent(content);
 
-  if (!dashboardData || (dashboardData.cards.length === 0 && dashboardData.charts.length === 0 && dashboardData.recommendations.length === 0)) {
+  if (!dashboardData || (dashboardData.cards.length === 0 && dashboardData.charts.length === 0 && dashboardData.recommendations.length === 0 && dashboardData.callouts.length === 0)) {
     return (
       <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
     );
@@ -63,6 +62,19 @@ const DashboardRenderer = ({ content }: { content: string }) => {
 
   return (
     <div className="space-y-6">
+      {/* Original Text - Always show unstructured content */}
+      {dashboardData.remainingText && (
+        <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-l-gray-400">
+          <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+            <Target className="h-4 w-4 mr-2" />
+            Additional Context
+          </h4>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700">
+            {dashboardData.remainingText}
+          </p>
+        </div>
+      )}
+
       {/* Insight Cards */}
       {dashboardData.cards.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -194,13 +206,14 @@ const DashboardRenderer = ({ content }: { content: string }) => {
   );
 };
 
-const parseDashboardContent = (content: string): DashboardData | null => {
+const parseDashboardContent = (content: string): (DashboardData & { remainingText?: string }) | null => {
   const cards: InsightCard[] = [];
   const charts: ChartData[] = [];
   const recommendations: Recommendation[] = [];
   const callouts: Callout[] = [];
 
   const lines = content.split('\n');
+  const usedLineIndices = new Set<number>();
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -231,13 +244,14 @@ const parseDashboardContent = (content: string): DashboardData | null => {
           icon: getIconForTitle(title),
           color: getColorForTitle(title)
         });
+        
+        usedLineIndices.add(i);
       }
     }
 
     // Parse chart suggestions
     if (line.toLowerCase().includes('chart:') || line.toLowerCase().includes('graph:')) {
       const chartTitle = line.replace(/^.*?chart:\s*/i, '').replace(/^.*?graph:\s*/i, '').trim();
-      // For now, create placeholder chart data
       charts.push({
         type: line.toLowerCase().includes('line') ? 'line' : 'bar',
         title: chartTitle,
@@ -245,6 +259,8 @@ const parseDashboardContent = (content: string): DashboardData | null => {
         xAxis: 'category',
         yAxis: ['value']
       });
+      
+      usedLineIndices.add(i);
     }
 
     // Parse recommendations (look for checkmarks or bullet points)
@@ -261,6 +277,8 @@ const parseDashboardContent = (content: string): DashboardData | null => {
         priority,
         savings
       });
+      
+      usedLineIndices.add(i);
     }
 
     // Parse callouts (look for warning/success patterns)
@@ -274,6 +292,7 @@ const parseDashboardContent = (content: string): DashboardData | null => {
       // Look for description in next lines
       if (i + 1 < lines.length && !lines[i + 1].match(/^[🟦💸🚀📊💰⚡🔥📈📉🎯⭐✅✓•-⚠️🚨🎉📢]/)) {
         description = lines[i + 1].trim();
+        usedLineIndices.add(i + 1);
       }
       
       callouts.push({
@@ -281,10 +300,22 @@ const parseDashboardContent = (content: string): DashboardData | null => {
         title,
         description
       });
+      
+      usedLineIndices.add(i);
     }
   }
 
-  return { cards, charts, recommendations, callouts };
+  // Collect remaining text that wasn't used for structured components
+  const remainingLines = lines.filter((_, index) => !usedLineIndices.has(index) && lines[index].trim().length > 0);
+  const remainingText = remainingLines.join('\n').trim();
+
+  return { 
+    cards, 
+    charts, 
+    recommendations, 
+    callouts,
+    remainingText: remainingText.length > 0 ? remainingText : undefined
+  };
 };
 
 const getIconForTitle = (title: string): string => {

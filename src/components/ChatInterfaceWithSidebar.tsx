@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User, Loader2, AlertCircle, Brain } from 'lucide-react';
+import { Toggle } from "@/components/ui/toggle";
+import { Send, Bot, User, Loader2, AlertCircle, Brain, BarChart, FileText } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { useChatSession } from '@/hooks/useChatSession';
@@ -29,6 +30,7 @@ const ChatInterfaceWithSidebar = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -50,6 +52,13 @@ const ChatInterfaceWithSidebar = () => {
     // Clear current session before loading new one
     clearCurrentSession();
     await loadSession(sessionId);
+  };
+
+  const toggleMessageView = (messageId: string) => {
+    setMessageViewModes(prev => ({
+      ...prev,
+      [messageId]: prev[messageId] === 'dashboard' ? 'text' : 'dashboard'
+    }));
   };
 
   const sendMessage = async () => {
@@ -133,29 +142,38 @@ const ChatInterfaceWithSidebar = () => {
   };
 
   const renderMessageContent = (message: any) => {
-    const tables = detectTablesInText(message.content);
+    const viewMode = messageViewModes[message.id] || 'text';
     
-    if (tables.length > 0) {
-      // Split content by table positions to render text and tables separately
-      const textParts = message.content.split('\n').filter((line: string) => {
-        const hasTableMarkers = line.includes('|') || /\s{3,}/.test(line);
-        return !hasTableMarkers || line.trim().length === 0;
-      });
+    if (viewMode === 'text') {
+      // Original text view with tables
+      const tables = detectTablesInText(message.content);
+      
+      if (tables.length > 0) {
+        const textParts = message.content.split('\n').filter((line: string) => {
+          const hasTableMarkers = line.includes('|') || /\s{3,}/.test(line);
+          return !hasTableMarkers || line.trim().length === 0;
+        });
+        
+        return (
+          <div>
+            {textParts.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{textParts.join('\n')}</p>
+              </div>
+            )}
+            {tables.map((table, index) => (
+              <TableChart key={index} table={table} index={index} />
+            ))}
+          </div>
+        );
+      }
       
       return (
-        <div>
-          {textParts.length > 0 && (
-            <div className="mb-4">
-              <DashboardRenderer content={textParts.join('\n')} />
-            </div>
-          )}
-          {tables.map((table, index) => (
-            <TableChart key={index} table={table} index={index} />
-          ))}
-        </div>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
       );
     }
     
+    // Dashboard view
     return (
       <DashboardRenderer content={message.content} />
     );
@@ -219,6 +237,30 @@ const ChatInterfaceWithSidebar = () => {
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                 }`}>
+                  {/* Toggle Button for AI messages */}
+                  {message.sender === 'assistant' && (
+                    <div className="flex justify-end mb-2">
+                      <Toggle
+                        pressed={messageViewModes[message.id] === 'dashboard'}
+                        onPressedChange={() => toggleMessageView(message.id)}
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                      >
+                        {messageViewModes[message.id] === 'dashboard' ? (
+                          <>
+                            <FileText className="w-3 h-3 mr-1" />
+                            Text
+                          </>
+                        ) : (
+                          <>
+                            <BarChart className="w-3 h-3 mr-1" />
+                            Dashboard
+                          </>
+                        )}
+                      </Toggle>
+                    </div>
+                  )}
+                  
                   {message.sender === 'user' ? (
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                   ) : (
