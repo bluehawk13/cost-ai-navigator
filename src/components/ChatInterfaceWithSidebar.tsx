@@ -12,6 +12,9 @@ import ChatSidebar from './ChatSidebar';
 import TableChart from './TableChart';
 import DashboardRenderer from './DashboardRenderer';
 import { detectTablesInText } from '@/utils/tableDetector';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import ReactMarkdown from 'react-markdown';
 
 const ChatInterfaceWithSidebar = () => {
   const { user } = useAuth();
@@ -261,11 +264,27 @@ const ChatInterfaceWithSidebar = () => {
                     </div>
                   )}
                   
-                  {message.sender === 'user' ? (
+{/*                   {message.sender === 'user' ? (
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                   ) : (
                     renderMessageContent(message)
-                  )}
+                  )} */}
+                    <div className="text-sm leading-relaxed prose max-w-none">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]} 
+                      rehypePlugins={[rehypeRaw]}
+                      components={{
+                        h1: ({ node, ...props }) => <h1 className="mt-6 mb-2 text-2xl font-bold" {...props} />,
+                        h2: ({ node, ...props }) => <h2 className="mt-6 mb-2 text-xl font-semibold" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="mt-6 mb-2 text-lg font-medium" {...props} />,
+                        p: ({ node, ...props }) => <p className="mb-3" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-3" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-3" {...props} />,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                   <span className={`text-xs mt-2 block ${
                     message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>
