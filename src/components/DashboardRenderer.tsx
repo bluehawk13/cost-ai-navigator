@@ -1,19 +1,22 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle, CheckCircle, Zap, Cloud, Cpu, Database, Users, Calendar, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle, CheckCircle, Zap, Cloud, Cpu, Database, Users, Calendar, Activity, FileText, BarChart3 } from 'lucide-react';
 import TableChart from './TableChart';
 import { detectTablesInText } from '@/utils/tableDetector';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
-interface DashboardData {
-  cards: InsightCard[];
-  charts: ChartData[];
-  recommendations: Recommendation[];
-  callouts: Callout[];
-  tables: any[];
-  remainingText?: string;
+interface DashboardSection {
+  title: string;
+  content: string;
+  type: 'section' | 'calculation' | 'assumptions' | 'strategies';
+  subsections?: DashboardSection[];
+  cards?: InsightCard[];
+  charts?: ChartData[];
+  tables?: any[];
 }
 
 interface InsightCard {
@@ -65,37 +68,192 @@ const iconMap: { [key: string]: any } = {
 const CHART_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1', '#d084d0', '#ffb347'];
 
 const DashboardRenderer = ({ content }: { content: string }) => {
-  const dashboardData = parseDashboardContent(content);
+  const parsedData = parseStructuredContent(content);
 
-  if (!dashboardData || (dashboardData.cards.length === 0 && dashboardData.charts.length === 0 && dashboardData.recommendations.length === 0 && dashboardData.callouts.length === 0 && dashboardData.tables.length === 0)) {
+  if (!parsedData || parsedData.sections.length === 0) {
     return (
-      <div className="prose max-w-none">
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+      <div className="prose max-w-none text-sm leading-relaxed">
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]} 
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            h1: ({ node, ...props }) => <h1 className="mt-4 mb-2 text-xl font-bold" {...props} />,
+            h2: ({ node, ...props }) => <h2 className="mt-4 mb-2 text-lg font-semibold" {...props} />,
+            h3: ({ node, ...props }) => <h3 className="mt-4 mb-2 text-base font-medium" {...props} />,
+            p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+            ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
+            ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+          }}
+        >
+          {content}
+        </ReactMarkdown>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Key Metrics Dashboard */}
-      {dashboardData.cards.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Activity className="h-5 w-5 mr-2 text-blue-600" />
-            Key Metrics
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {dashboardData.cards.map((card, index) => {
+      {/* Render structured sections */}
+      {parsedData.sections.map((section, index) => (
+        <DashboardSection key={index} section={section} />
+      ))}
+
+      {/* Global recommendations if any */}
+      {parsedData.recommendations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Target className="h-5 w-5 mr-2" />
+              Actionable Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {parsedData.recommendations.map((rec, index) => (
+                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="prose max-w-none text-sm">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                        {rec.text}
+                      </ReactMarkdown>
+                    </div>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Badge variant={
+                        rec.priority === 'high' ? 'destructive' :
+                        rec.priority === 'medium' ? 'default' : 'secondary'
+                      } className="text-xs">
+                        {rec.priority} priority
+                      </Badge>
+                      {rec.savings && (
+                        <Badge variant="outline" className="text-green-600 text-xs">
+                          {rec.savings} savings
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Global callouts if any */}
+      {parsedData.callouts.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {parsedData.callouts.map((callout, index) => (
+            <Card key={index} className={`border-l-4 ${
+              callout.type === 'warning' ? 'border-l-yellow-500 bg-yellow-50' :
+              callout.type === 'success' ? 'border-l-green-500 bg-green-50' :
+              'border-l-blue-500 bg-blue-50'
+            }`}>
+              <CardContent className="p-4">
+                <div className="flex items-start space-x-3">
+                  {callout.type === 'warning' && <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />}
+                  {callout.type === 'success' && <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />}
+                  {callout.type === 'info' && <Target className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900">{callout.title}</h4>
+                    <div className="prose max-w-none text-sm mt-1">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                        {callout.description}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Additional unstructured content */}
+      {parsedData.remainingText && (
+        <Card className="bg-gray-50 border-l-4 border-l-gray-400">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium text-gray-900 flex items-center">
+              <FileText className="h-4 w-4 mr-2" />
+              Additional Context
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="prose max-w-none text-sm leading-relaxed">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]} 
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  h1: ({ node, ...props }) => <h1 className="mt-4 mb-2 text-lg font-bold" {...props} />,
+                  h2: ({ node, ...props }) => <h2 className="mt-4 mb-2 text-base font-semibold" {...props} />,
+                  h3: ({ node, ...props }) => <h3 className="mt-4 mb-2 text-sm font-medium" {...props} />,
+                  p: ({ node, ...props }) => <p className="mb-2 text-gray-700" {...props} />,
+                  ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                  ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                }}
+              >
+                {parsedData.remainingText}
+              </ReactMarkdown>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+const DashboardSection = ({ section }: { section: DashboardSection }) => {
+  const getSectionIcon = (type: string) => {
+    switch (type) {
+      case 'calculation': return <DollarSign className="h-5 w-5" />;
+      case 'assumptions': return <FileText className="h-5 w-5" />;
+      case 'strategies': return <Target className="h-5 w-5" />;
+      default: return <BarChart3 className="h-5 w-5" />;
+    }
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center text-gray-900">
+          {getSectionIcon(section.type)}
+          <span className="ml-2">{section.title}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Section content with markdown */}
+        {section.content && (
+          <div className="prose max-w-none text-sm leading-relaxed">
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]} 
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                h1: ({ node, ...props }) => <h1 className="mt-4 mb-2 text-lg font-bold" {...props} />,
+                h2: ({ node, ...props }) => <h2 className="mt-4 mb-2 text-base font-semibold" {...props} />,
+                h3: ({ node, ...props }) => <h3 className="mt-4 mb-2 text-sm font-medium" {...props} />,
+                p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+              }}
+            >
+              {section.content}
+            </ReactMarkdown>
+          </div>
+        )}
+
+        {/* Cards within section */}
+        {section.cards && section.cards.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {section.cards.map((card, index) => {
               const IconComponent = iconMap[card.icon] || DollarSign;
               return (
-                <Card key={index} className="bg-gradient-to-br from-white to-gray-50 hover:shadow-md transition-shadow">
+                <Card key={index} className="bg-gradient-to-br from-white to-gray-50">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{card.title}</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
+                        <p className="text-lg font-bold text-gray-900 mt-1">{card.value}</p>
                         {card.change && (
-                          <div className={`flex items-center mt-2 text-sm ${
+                          <div className={`flex items-center mt-1 text-sm ${
                             card.trend === 'up' ? 'text-green-600' : 
                             card.trend === 'down' ? 'text-red-600' : 'text-gray-600'
                           }`}>
@@ -105,8 +263,8 @@ const DashboardRenderer = ({ content }: { content: string }) => {
                           </div>
                         )}
                       </div>
-                      <div className={`p-3 rounded-xl ${card.color} flex-shrink-0`}>
-                        <IconComponent className="h-6 w-6 text-white" />
+                      <div className={`p-2 rounded-lg ${card.color} flex-shrink-0`}>
+                        <IconComponent className="h-4 w-4 text-white" />
                       </div>
                     </div>
                   </CardContent>
@@ -114,18 +272,12 @@ const DashboardRenderer = ({ content }: { content: string }) => {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Charts Section */}
-      {dashboardData.charts.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <BarChart className="h-5 w-5 mr-2 text-purple-600" />
-            Analytics & Trends
-          </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {dashboardData.charts.map((chart, index) => (
+        {/* Charts within section */}
+        {section.charts && section.charts.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {section.charts.map((chart, index) => (
               <Card key={index} className="bg-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">{chart.title}</CardTitle>
@@ -134,7 +286,7 @@ const DashboardRenderer = ({ content }: { content: string }) => {
                   )}
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={250}>
                     {chart.type === 'bar' ? (
                       <BarChart data={chart.data}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -176,7 +328,7 @@ const DashboardRenderer = ({ content }: { content: string }) => {
                           cy="50%"
                           labelLine={false}
                           label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                          outerRadius={100}
+                          outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
                         >
@@ -192,257 +344,240 @@ const DashboardRenderer = ({ content }: { content: string }) => {
               </Card>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Tables Section */}
-      {dashboardData.tables.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Database className="h-5 w-5 mr-2 text-green-600" />
-            Data Tables
-          </h3>
-          <div className="space-y-4 mb-6">
-            {dashboardData.tables.map((table, index) => (
+        {/* Tables within section */}
+        {section.tables && section.tables.length > 0 && (
+          <div className="space-y-4">
+            {section.tables.map((table, index) => (
               <TableChart key={index} table={table} index={index} />
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Callouts */}
-      {dashboardData.callouts.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {dashboardData.callouts.map((callout, index) => (
-            <Card key={index} className={`border-l-4 ${
-              callout.type === 'warning' ? 'border-l-yellow-500 bg-yellow-50' :
-              callout.type === 'success' ? 'border-l-green-500 bg-green-50' :
-              'border-l-blue-500 bg-blue-50'
-            }`}>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  {callout.type === 'warning' && <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />}
-                  {callout.type === 'success' && <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />}
-                  {callout.type === 'info' && <Target className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />}
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{callout.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{callout.description}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Recommendations */}
-      {dashboardData.recommendations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Target className="h-5 w-5 mr-2" />
-              Actionable Recommendations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {dashboardData.recommendations.map((rec, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border">
-                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900 font-medium">{rec.text}</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Badge variant={
-                        rec.priority === 'high' ? 'destructive' :
-                        rec.priority === 'medium' ? 'default' : 'secondary'
-                      } className="text-xs">
-                        {rec.priority} priority
-                      </Badge>
-                      {rec.savings && (
-                        <Badge variant="outline" className="text-green-600 text-xs">
-                          {rec.savings} savings
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Additional Context */}
-      {dashboardData.remainingText && (
-        <Card className="bg-gray-50 border-l-4 border-l-gray-400">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium text-gray-900 flex items-center">
-              <Target className="h-4 w-4 mr-2" />
-              Additional Context
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="prose max-w-none">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700">
-                {dashboardData.remainingText}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        {/* Subsections */}
+        {section.subsections && section.subsections.length > 0 && (
+          <div className="space-y-4 border-l-2 border-gray-200 pl-4">
+            {section.subsections.map((subsection, index) => (
+              <DashboardSection key={index} section={subsection} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
-const parseDashboardContent = (content: string): (DashboardData & { remainingText?: string }) | null => {
-  const cards: InsightCard[] = [];
-  const charts: ChartData[] = [];
-  const recommendations: Recommendation[] = [];
-  const callouts: Callout[] = [];
+const parseStructuredContent = (content: string) => {
+  const lines = content.split('\n');
+  const sections: DashboardSection[] = [];
+  const globalRecommendations: Recommendation[] = [];
+  const globalCallouts: Callout[] = [];
   
   // Detect tables using existing utility
   const tables = detectTablesInText(content);
-
-  const lines = content.split('\n');
-  const usedLineIndices = new Set<number>();
-
-  // Parse insight cards (look for emoji patterns)
+  
+  let currentSection: DashboardSection | null = null;
+  let currentSubsection: DashboardSection | null = null;
+  let usedLineIndices = new Set<number>();
+  
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-
-    // Parse insight cards
-    if (line.match(/^[🟦💸🚀📊💰⚡🔥📈📉🎯⭐👥📅💡⚙️🏢]/)) {
-      const parts = line.split(':');
-      if (parts.length >= 2) {
-        const title = parts[0].replace(/^[🟦💸🚀📊💰⚡🔥📈📉🎯⭐👥📅💡⚙️🏢]\s*/, '').trim();
-        const value = parts.slice(1).join(':').trim();
-        
-        let trend: 'up' | 'down' | 'neutral' = 'neutral';
-        let change = '';
-        
-        const changeMatch = value.match(/\(([^)]+)\)/);
-        if (changeMatch) {
-          change = changeMatch[1];
-          trend = change.includes('↑') || change.includes('+') || change.toLowerCase().includes('increase') ? 'up' : 
-                 change.includes('↓') || change.includes('-') || change.toLowerCase().includes('decrease') ? 'down' : 'neutral';
-        }
-        
-        cards.push({
-          title,
-          value: value.replace(/\([^)]+\)/, '').trim(),
-          change,
-          trend,
-          icon: getIconForTitle(title),
-          color: getColorForTitle(title)
-        });
-        
-        usedLineIndices.add(i);
+    
+    // Skip empty lines
+    if (!line) continue;
+    
+    // Detect main sections (h1, h2 headers or strong patterns)
+    if (line.match(/^#+\s+/) || line.match(/^\*\*[^*]+\*\*$/) || 
+        line.match(/^[A-Z][A-Za-z\s]+:$/) || line.match(/^## /)) {
+      
+      // Save previous section
+      if (currentSection) {
+        sections.push(currentSection);
       }
-    }
-
-    // Parse chart suggestions with enhanced detection
-    if (line.toLowerCase().includes('chart:') || line.toLowerCase().includes('graph:') || 
-        line.toLowerCase().includes('pie chart') || line.toLowerCase().includes('bar chart') ||
-        line.toLowerCase().includes('line chart') || line.toLowerCase().includes('area chart')) {
       
-      let chartTitle = line.replace(/^.*?chart:\s*/i, '').replace(/^.*?graph:\s*/i, '').trim();
-      let chartType: 'bar' | 'line' | 'pie' | 'area' = 'bar';
+      const sectionTitle = line.replace(/^#+\s*/, '').replace(/^\*\*|\*\*$/g, '').replace(/:$/, '').trim();
+      const sectionType = getSectionType(sectionTitle, line);
       
-      if (line.toLowerCase().includes('pie')) chartType = 'pie';
-      else if (line.toLowerCase().includes('line')) chartType = 'line';
-      else if (line.toLowerCase().includes('area')) chartType = 'area';
-      
-      // Generate sample data based on context
-      const sampleData = generateSampleChartData(chartTitle, chartType);
-      
-      charts.push({
-        type: chartType,
-        title: chartTitle || `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`,
-        data: sampleData,
-        xAxis: 'name',
-        yAxis: chartType === 'pie' ? ['value'] : ['value', 'target'],
-        description: `Visual representation of ${chartTitle.toLowerCase()}`
-      });
-      
+      currentSection = {
+        title: sectionTitle,
+        content: '',
+        type: sectionType,
+        subsections: [],
+        cards: [],
+        charts: [],
+        tables: []
+      };
+      currentSubsection = null;
       usedLineIndices.add(i);
+      continue;
     }
-
+    
+    // Detect subsections (h3, h4 or nested patterns)
+    if (currentSection && (line.match(/^###\s+/) || line.match(/^\d+\.\s+[A-Z]/) || 
+        line.match(/^[A-Z][A-Za-z\s&()]+:$/))) {
+      
+      const subsectionTitle = line.replace(/^###\s*/, '').replace(/^\d+\.\s*/, '').replace(/:$/, '').trim();
+      
+      currentSubsection = {
+        title: subsectionTitle,
+        content: '',
+        type: getSectionType(subsectionTitle, line),
+        cards: [],
+        charts: [],
+        tables: []
+      };
+      
+      if (currentSection.subsections) {
+        currentSection.subsections.push(currentSubsection);
+      }
+      usedLineIndices.add(i);
+      continue;
+    }
+    
+    // Parse specific patterns for cards, but group related content
+    if (line.match(/^[🟦💸🚀📊💰⚡🔥📈📉🎯⭐👥📅💡⚙️🏢]/)) {
+      const target = currentSubsection || currentSection;
+      if (target) {
+        const card = parseInsightCard(line);
+        if (card && target.cards) {
+          target.cards.push(card);
+        }
+      }
+      usedLineIndices.add(i);
+      continue;
+    }
+    
     // Parse recommendations
     if (line.match(/^[✅✓•-]\s/)) {
-      const text = line.replace(/^[✅✓•-]\s*/, '').trim();
-      const priority = text.toLowerCase().includes('critical') || text.toLowerCase().includes('urgent') ? 'high' :
-                      text.toLowerCase().includes('important') ? 'medium' : 'low';
-      
-      const savingsMatch = text.match(/\$[\d,]+|\d+%/);
-      const savings = savingsMatch ? savingsMatch[0] : undefined;
-      
-      recommendations.push({
-        text: text.replace(/\([^)]*savings[^)]*\)/i, '').trim(),
-        priority,
-        savings
-      });
-      
+      const rec = parseRecommendation(line);
+      if (rec) {
+        globalRecommendations.push(rec);
+      }
       usedLineIndices.add(i);
+      continue;
     }
-
+    
     // Parse callouts
     if (line.match(/^[⚠️🚨✅🎉📢💡]/)) {
-      const type = line.startsWith('⚠️') || line.startsWith('🚨') ? 'warning' :
-                   line.startsWith('✅') || line.startsWith('🎉') ? 'success' : 'info';
-      
-      const title = line.replace(/^[⚠️🚨✅🎉📢💡]\s*/, '').trim();
-      let description = '';
-      
-      if (i + 1 < lines.length && !lines[i + 1].match(/^[🟦💸🚀📊💰⚡🔥📈📉🎯⭐✅✓•-⚠️🚨🎉📢💡👥📅⚙️🏢]/)) {
-        description = lines[i + 1].trim();
-        usedLineIndices.add(i + 1);
+      const callout = parseCallout(line, lines, i);
+      if (callout) {
+        globalCallouts.push(callout);
+        if (callout.description && i + 1 < lines.length) {
+          usedLineIndices.add(i + 1);
+        }
       }
-      
-      callouts.push({ type, title, description });
       usedLineIndices.add(i);
+      continue;
+    }
+    
+    // Add remaining content to current section/subsection
+    if (!usedLineIndices.has(i)) {
+      const target = currentSubsection || currentSection;
+      if (target) {
+        target.content += (target.content ? '\n' : '') + line;
+      }
     }
   }
-
-  // Collect remaining text that wasn't used for structured components
+  
+  // Add the last section
+  if (currentSection) {
+    sections.push(currentSection);
+  }
+  
+  // Distribute tables to relevant sections
+  distributeTablesIntoSections(sections, tables);
+  
+  // Collect remaining unprocessed text
   const remainingLines = lines.filter((_, index) => !usedLineIndices.has(index) && lines[index].trim().length > 0);
   const remainingText = remainingLines.join('\n').trim();
-
-  return { 
-    cards, 
-    charts, 
-    recommendations, 
-    callouts,
-    tables,
+  
+  return {
+    sections,
+    recommendations: globalRecommendations,
+    callouts: globalCallouts,
     remainingText: remainingText.length > 0 ? remainingText : undefined
   };
 };
 
-const generateSampleChartData = (title: string, type: string) => {
+const getSectionType = (title: string, line: string): 'section' | 'calculation' | 'assumptions' | 'strategies' => {
   const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes('cost') && (lowerTitle.includes('calculation') || lowerTitle.includes('breakdown'))) return 'calculation';
+  if (lowerTitle.includes('assumption')) return 'assumptions';
+  if (lowerTitle.includes('strategy') || lowerTitle.includes('optimization') || lowerTitle.includes('recommendation')) return 'strategies';
+  return 'section';
+};
+
+const parseInsightCard = (line: string): InsightCard | null => {
+  const parts = line.split(':');
+  if (parts.length >= 2) {
+    const title = parts[0].replace(/^[🟦💸🚀📊💰⚡🔥📈📉🎯⭐👥📅💡⚙️🏢]\s*/, '').trim();
+    const value = parts.slice(1).join(':').trim();
+    
+    let trend: 'up' | 'down' | 'neutral' = 'neutral';
+    let change = '';
+    
+    const changeMatch = value.match(/\(([^)]+)\)/);
+    if (changeMatch) {
+      change = changeMatch[1];
+      trend = change.includes('↑') || change.includes('+') || change.toLowerCase().includes('increase') ? 'up' : 
+             change.includes('↓') || change.includes('-') || change.toLowerCase().includes('decrease') ? 'down' : 'neutral';
+    }
+    
+    return {
+      title,
+      value: value.replace(/\([^)]+\)/, '').trim(),
+      change,
+      trend,
+      icon: getIconForTitle(title),
+      color: getColorForTitle(title)
+    };
+  }
+  return null;
+};
+
+const parseRecommendation = (line: string): Recommendation | null => {
+  const text = line.replace(/^[✅✓•-]\s*/, '').trim();
+  const priority = text.toLowerCase().includes('critical') || text.toLowerCase().includes('urgent') ? 'high' :
+                  text.toLowerCase().includes('important') ? 'medium' : 'low';
   
-  if (lowerTitle.includes('cost') || lowerTitle.includes('spend')) {
-    return [
-      { name: 'Jan', value: 4000, target: 3500 },
-      { name: 'Feb', value: 3000, target: 3200 },
-      { name: 'Mar', value: 2000, target: 2800 },
-      { name: 'Apr', value: 2780, target: 2600 },
-      { name: 'May', value: 1890, target: 2400 },
-      { name: 'Jun', value: 2390, target: 2200 }
-    ];
-  } else if (lowerTitle.includes('service') || lowerTitle.includes('provider')) {
-    return [
-      { name: 'AWS', value: 45, target: 40 },
-      { name: 'Azure', value: 30, target: 35 },
-      { name: 'GCP', value: 15, target: 20 },
-      { name: 'Others', value: 10, target: 5 }
-    ];
-  } else {
-    return [
-      { name: 'A', value: 400, target: 350 },
-      { name: 'B', value: 300, target: 320 },
-      { name: 'C', value: 200, target: 280 },
-      { name: 'D', value: 278, target: 260 }
-    ];
+  const savingsMatch = text.match(/\$[\d,]+|\d+%/);
+  const savings = savingsMatch ? savingsMatch[0] : undefined;
+  
+  return {
+    text: text.replace(/\([^)]*savings[^)]*\)/i, '').trim(),
+    priority,
+    savings
+  };
+};
+
+const parseCallout = (line: string, lines: string[], index: number): Callout | null => {
+  const type = line.startsWith('⚠️') || line.startsWith('🚨') ? 'warning' :
+               line.startsWith('✅') || line.startsWith('🎉') ? 'success' : 'info';
+  
+  const title = line.replace(/^[⚠️🚨✅🎉📢💡]\s*/, '').trim();
+  let description = '';
+  
+  if (index + 1 < lines.length && !lines[index + 1].match(/^[🟦💸🚀📊💰⚡🔥📈📉🎯⭐✅✓•-⚠️🚨🎉📢💡👥📅⚙️🏢]/)) {
+    description = lines[index + 1].trim();
+  }
+  
+  return { type, title, description };
+};
+
+const distributeTablesIntoSections = (sections: DashboardSection[], tables: any[]) => {
+  // Simple distribution - add tables to the first section or create a data section
+  if (tables.length > 0) {
+    if (sections.length > 0) {
+      sections[0].tables = tables;
+    } else {
+      sections.push({
+        title: 'Data Tables',
+        content: '',
+        type: 'section',
+        tables: tables
+      });
+    }
   }
 };
 
