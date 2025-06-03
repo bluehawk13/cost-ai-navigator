@@ -154,7 +154,7 @@ const ChatInterfaceWithSidebar = () => {
     const viewMode = messageViewModes[message.id] || 'text';
     
     if (viewMode === 'dashboard') {
-      // In dashboard view, don't show tables separately - they're handled within DashboardRenderer
+     
       return <DashboardRenderer content={message.content} />;
     }
     
@@ -195,7 +195,7 @@ const ChatInterfaceWithSidebar = () => {
       );
     }
     
-    // No tables, just render markdown
+    
     return (
       <div className="text-sm leading-relaxed whitespace-pre-wrap">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -217,7 +217,7 @@ const ChatInterfaceWithSidebar = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
+       
         <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-6">
           <div className="flex items-center justify-center space-x-3">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
