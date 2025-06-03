@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,8 @@ import { useChatSession } from '@/hooks/useChatSession';
 import ChatSidebar from './ChatSidebar';
 import TableChart from './TableChart';
 import DashboardRenderer from './DashboardRenderer';
+import PdfDownloadControls from './PdfDownloadControls';
+import MessageCheckbox from './MessageCheckbox';
 import { detectTablesInText } from '@/utils/tableDetector';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -35,6 +36,8 @@ const ChatInterfaceWithSidebar = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [showCheckboxes, setShowCheckboxes] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -60,6 +63,16 @@ const ChatInterfaceWithSidebar = () => {
       ...prev,
       [messageId]: prev[messageId] === 'dashboard' ? 'text' : 'dashboard'
     }));
+  };
+
+  const handleMessageToggle = (messageId: string) => {
+    const newSelected = new Set(selectedMessages);
+    if (newSelected.has(messageId)) {
+      newSelected.delete(messageId);
+    } else {
+      newSelected.add(messageId);
+    }
+    setSelectedMessages(newSelected);
   };
 
   const sendMessage = async () => {
@@ -233,6 +246,12 @@ const ChatInterfaceWithSidebar = () => {
           </div>
         </div>
 
+        {/* PDF Download Controls */}
+        <PdfDownloadControls 
+          messages={messages} 
+          sessionId={currentSessionId}
+        />
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((message) => (
@@ -240,7 +259,15 @@ const ChatInterfaceWithSidebar = () => {
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-5xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-5xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''} relative`}>
+                {/* Message Checkbox */}
+                <MessageCheckbox
+                  messageId={message.id}
+                  isSelected={selectedMessages.has(message.id)}
+                  onToggle={handleMessageToggle}
+                  showCheckboxes={showCheckboxes}
+                />
+
                 {/* Avatar */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.sender === 'user' 
