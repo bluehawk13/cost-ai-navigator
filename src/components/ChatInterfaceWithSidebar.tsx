@@ -172,7 +172,7 @@ const ChatInterfaceWithSidebar = () => {
         <div className="space-y-4">
           {contentWithoutTables.trim() && (
             <div className="prose max-w-none text-sm leading-relaxed">
-              <ReactMarkdown 
+              {/* <ReactMarkdown 
                 remarkPlugins={[remarkGfm]} 
                 rehypePlugins={[rehypeRaw]}
                 components={{
@@ -183,9 +183,9 @@ const ChatInterfaceWithSidebar = () => {
                   ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
                   ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
                 }}
-              >
+              > */}
                 {contentWithoutTables}
-              </ReactMarkdown>
+              {/* </ReactMarkdown> */}
             </div>
           )}
           {tables.map((table, index) => (
