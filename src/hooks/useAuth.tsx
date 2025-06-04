@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
+import { useFirebaseAnalytics } from './useFirebaseAnalytics';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { trackLogin } = useFirebaseAnalytics();
 
   useEffect(() => {
     // Set up auth state listener
@@ -16,6 +18,12 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Track authentication events in Firebase Analytics
+        if (event === 'SIGNED_IN' && session?.user) {
+          const provider = session.user.app_metadata.provider || 'email';
+          trackLogin(provider);
+        }
       }
     );
 
@@ -27,7 +35,7 @@ export const useAuth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [trackLogin]);
 
   return { user, session, loading };
 };

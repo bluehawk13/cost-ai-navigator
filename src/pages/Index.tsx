@@ -11,11 +11,13 @@ import Features from '@/components/Features';
 import About from '@/components/About';
 import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/hooks/useAuth';
+import { useFirebaseAnalytics } from '@/hooks/useFirebaseAnalytics';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { trackEvent } = useFirebaseAnalytics();
 
   if (loading) {
     return (
@@ -29,6 +31,20 @@ const Index = () => {
       </div>
     );
   }
+
+  const handleGetStarted = () => {
+    trackEvent('get_started_clicked', { user_authenticated: !!user });
+    if (user) {
+      setActiveTab("chat");
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    trackEvent('tab_changed', { tab: value });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -46,7 +62,7 @@ const Index = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-auto">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="home">Home</TabsTrigger>
                   <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -57,7 +73,10 @@ const Index = () => {
                 <UserMenu user={user} />
               ) : (
                 <Button 
-                  onClick={() => navigate('/auth')}
+                  onClick={() => {
+                    trackEvent('sign_in_clicked', { location: 'header' });
+                    navigate('/auth');
+                  }}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
                   <LogIn className="h-4 w-4 mr-2" />
@@ -71,10 +90,10 @@ const Index = () => {
 
       {/* Main Content */}
       <main>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsContent value="home" className="mt-0">
             <div className="space-y-20 pb-0">
-              <Hero onGetStarted={() => user ? setActiveTab("chat") : navigate('/auth')} />
+              <Hero onGetStarted={handleGetStarted} />
               <About />
               <Features />
               
@@ -93,7 +112,14 @@ const Index = () => {
                   <Button 
                     size="lg" 
                     variant="secondary"
-                    onClick={() => user ? setActiveTab("chat") : navigate('/auth')}
+                    onClick={() => {
+                      trackEvent('cta_clicked', { user_authenticated: !!user });
+                      if (user) {
+                        setActiveTab("chat");
+                      } else {
+                        navigate('/auth');
+                      }
+                    }}
                     className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg"
                   >
                     {user ? "Get Started – Go to Chat" : "Sign Up Now – It's Free"}
@@ -121,7 +147,10 @@ const Index = () => {
                       Please sign in to access the AI Cost Optimization chat interface and start saving on your AI costs.
                     </p>
                     <Button 
-                      onClick={() => navigate('/auth')}
+                      onClick={() => {
+                        trackEvent('auth_required_sign_in_clicked');
+                        navigate('/auth');
+                      }}
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
                     >
                       <LogIn className="h-4 w-4 mr-2" />
