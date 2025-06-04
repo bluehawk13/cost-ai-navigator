@@ -172,7 +172,7 @@ const ChatInterfaceWithSidebar = () => {
         <div className="space-y-4">
           {contentWithoutTables.trim() && (
             <div className="prose max-w-none text-sm leading-relaxed">
-              {/* <ReactMarkdown 
+              <ReactMarkdown 
                 remarkPlugins={[remarkGfm]} 
                 rehypePlugins={[rehypeRaw]}
                 components={{
@@ -183,9 +183,9 @@ const ChatInterfaceWithSidebar = () => {
                   ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
                   ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
                 }}
-              > */}
+              >
                 {contentWithoutTables}
-              {/* </ReactMarkdown> */}
+              </ReactMarkdown>
             </div>
           )}
           {tables.map((table, index) => (
@@ -218,21 +218,15 @@ const ChatInterfaceWithSidebar = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
        
-        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-6">
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-9">
           <div className="flex items-center justify-center space-x-3">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
-              <Brain className="h-8 w-8 text-white" />
-            </div>
+           
             <div className="text-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                AI Cost Optimization Chat
+              Get instant insights on AI costs, ROI analysis, and optimization strategies
               </h1>
-              <p className="text-gray-600 text-sm">
-                Get instant insights on AI costs, ROI analysis, and optimization strategies
-              </p>
-              {currentSessionId && (
-                <p className="text-xs text-gray-500 mt-1">Session: {currentSessionId.slice(0, 8)}...</p>
-              )}
+             
+             
             </div>
           </div>
         </div>
