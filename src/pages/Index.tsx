@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Zap, Target, BarChart3, Cog, MessageSquare, ArrowRight, Star, Shield, Users, User, LogIn } from 'lucide-react';
+import { Bot, Zap, Target, BarChart3, Cog, MessageSquare, ArrowRight, Star, Shield, Users, User, LogIn, Workflow } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ChatInterfaceWithSidebar from '@/components/ChatInterfaceWithSidebar';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import About from '@/components/About';
 import UserMenu from '@/components/UserMenu';
+import WorkflowBuilder from './WorkflowBuilder';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebaseAnalytics } from '@/hooks/useFirebaseAnalytics';
 
@@ -63,9 +64,13 @@ const Index = () => {
             
             <div className="flex items-center space-x-4">
               <Tabs value={activeTab} onValueChange={handleTabChange} className="w-auto">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="home">Home</TabsTrigger>
                   <TabsTrigger value="chat">Chat</TabsTrigger>
+                  <TabsTrigger value="workflow">
+                    <Workflow className="h-4 w-4 mr-1" />
+                    Workflow
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
               
@@ -149,6 +154,38 @@ const Index = () => {
                     <Button 
                       onClick={() => {
                         trackEvent('auth_required_sign_in_clicked');
+                        navigate('/auth');
+                      }}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
+                    >
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Sign In to Continue
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="workflow" className="mt-0">
+            {user ? (
+              <WorkflowBuilder />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center p-4">
+                <Card className="max-w-md w-full bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-xl">
+                  <CardContent className="p-8 text-center">
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-xl mb-6 mx-auto w-fit">
+                      <Workflow className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                      Authentication Required
+                    </h2>
+                    <p className="text-gray-600 mb-6">
+                      Please sign in to access the AI Workflow Builder and create your custom AI agent pipelines.
+                    </p>
+                    <Button 
+                      onClick={() => {
+                        trackEvent('workflow_auth_required_clicked');
                         navigate('/auth');
                       }}
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
