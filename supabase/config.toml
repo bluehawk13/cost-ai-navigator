@@ -1,2 +1,6 @@
+
 [project]
-id = "${VITE_SUPABASE_PROJECT_ID}"
+id = "jxuuuzfndttyvbopeotc"
+
+[functions.chat-agent]
+verify_jwt = false

@@ -16,6 +16,7 @@ import { detectTablesInText } from '@/utils/tableDetector';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import ReactMarkdown from 'react-markdown';
+import { supabase } from '@/integrations/supabase/client';
 
 const ChatInterfaceWithSidebar = () => {
   const { user } = useAuth();
@@ -98,28 +99,19 @@ const ChatInterfaceWithSidebar = () => {
     }
     
     try {
-      const response = await fetch(import.meta.env.VITE_AGENT_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_AGENT_API_KEY
-        },
-        body: JSON.stringify({
-          user_id: import.meta.env.VITE_DEFAULT_USER_EMAIL,
-          agent_id: import.meta.env.VITE_AGENT_ID,
-          session_id: import.meta.env.VITE_SESSION_ID,
-          message: userMessageContent
-        })
+      // Use Supabase edge function to call the agent API
+      const { data, error } = await supabase.functions.invoke('chat-agent', {
+        body: {
+          message: userMessageContent,
+          user_email: user.email || 'default@example.com'
+        }
       });
-    
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data = await response.json();
-      const assistantResponse = data.response || "I apologize, but I couldn't process your request. Please try again.";
-
+      const assistantResponse = data?.response || "I apologize, but I couldn't process your request. Please try again.";
       await saveMessage(assistantResponse, 'assistant');
       
     } catch (error) {
@@ -235,6 +227,10 @@ const ChatInterfaceWithSidebar = () => {
         <PdfDownloadControls 
           messages={messages} 
           sessionId={currentSessionId}
+          selectedMessages={selectedMessages}
+          setSelectedMessages={setSelectedMessages}
+          showCheckboxes={showCheckboxes}
+          setShowCheckboxes={setShowCheckboxes}
         />
 
         {/* Messages */}
