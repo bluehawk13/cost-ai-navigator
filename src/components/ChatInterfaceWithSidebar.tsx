@@ -38,6 +38,7 @@ const ChatInterfaceWithSidebar = () => {
   const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
   const [showCheckboxes, setShowCheckboxes] = useState(false);
+  const [refreshSidebar, setRefreshSidebar] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -50,7 +51,11 @@ const ChatInterfaceWithSidebar = () => {
 
   const handleNewChat = async () => {
     clearCurrentSession();
-    await createNewSession();
+    const newSessionId = await createNewSession();
+    if (newSessionId) {
+      // Force sidebar refresh to show the new session
+      setRefreshSidebar(prev => prev + 1);
+    }
   };
 
   const handleSessionSelect = async (sessionId: string) => {
@@ -205,6 +210,7 @@ const ChatInterfaceWithSidebar = () => {
         currentSessionId={currentSessionId}
         onSessionSelect={handleSessionSelect}
         onNewChat={handleNewChat}
+        key={refreshSidebar}
       />
 
       {/* Main Chat Area */}

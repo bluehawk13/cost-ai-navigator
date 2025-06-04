@@ -40,11 +40,11 @@ export const useChatSession = () => {
 
       if (error) throw error;
 
-      // Clear messages and set new session
+      // Clear messages and set new session immediately
       setMessages([]);
       setCurrentSessionId(data.id);
       
-      // Add welcome message for new session
+      // Add welcome message for new session immediately
       const welcomeMessage: Message = {
         id: 'welcome-' + data.id,
         content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
@@ -52,12 +52,6 @@ export const useChatSession = () => {
         created_at: new Date().toISOString()
       };
       setMessages([welcomeMessage]);
-      
-      // Force a session list refresh by triggering realtime update
-      await supabase
-        .from('chat_sessions')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', data.id);
       
       return data.id;
     } catch (error: any) {
