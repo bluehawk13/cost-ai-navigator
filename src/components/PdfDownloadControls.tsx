@@ -1,10 +1,8 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Download, FileText } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { FileDown, ToggleLeft, ToggleRight } from 'lucide-react';
 import jsPDF from 'jspdf';
-import { detectTablesInText } from '@/utils/tableDetector';
 
 interface Message {
   id: string;
@@ -16,285 +14,231 @@ interface Message {
 interface PdfDownloadControlsProps {
   messages: Message[];
   sessionId: string | null;
+  selectedMessages: Set<string>;
+  setSelectedMessages: React.Dispatch<React.SetStateAction<Set<string>>>;
+  showCheckboxes: boolean;
+  setShowCheckboxes: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const PdfDownloadControls: React.FC<PdfDownloadControlsProps> = ({ messages, sessionId }) => {
-  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
-  const [showCheckboxes, setShowCheckboxes] = useState(false);
-
-  const handleMessageToggle = (messageId: string) => {
-    const newSelected = new Set(selectedMessages);
-    if (newSelected.has(messageId)) {
-      newSelected.delete(messageId);
-    } else {
-      newSelected.add(messageId);
+const PdfDownloadControls: React.FC<PdfDownloadControlsProps> = ({
+  messages,
+  sessionId,
+  selectedMessages,
+  setSelectedMessages,
+  showCheckboxes,
+  setShowCheckboxes,
+}) => {
+  const parseTableFromText = (text: string) => {
+    const lines = text.split('\n');
+    const tableRows: string[][] = [];
+    
+    for (const line of lines) {
+      if (line.includes('|') && line.trim() !== '') {
+        const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+        if (cells.length > 0) {
+          tableRows.push(cells);
+        }
+      }
     }
-    setSelectedMessages(newSelected);
+    
+    return tableRows.length > 1 ? tableRows : null;
   };
 
-  const selectAllMessages = () => {
-    const nonWelcomeMessages = messages.filter(msg => !msg.id.startsWith('welcome-'));
-    setSelectedMessages(new Set(nonWelcomeMessages.map(msg => msg.id)));
-  };
-
-  const clearSelection = () => {
-    setSelectedMessages(new Set());
-  };
-
-  const cleanTextForPdf = (text: string): string => {
-    // Remove markdown formatting
-    let cleanText = text
-      .replace(/[#*`]/g, '')
-      .replace(/\|/g, ' | ')
-      .replace(/^\s*[-\*\+]\s+/gm, '• ')
-      .replace(/^\s*\d+\.\s+/gm, (match, offset, string) => {
-        const number = match.match(/\d+/)?.[0] || '1';
-        return `${number}. `;
+  const addTableToPdf = (doc: jsPDF, table: string[][], startY: number) => {
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 20;
+    const tableWidth = pageWidth - (margin * 2);
+    const colWidth = tableWidth / table[0].length;
+    
+    let currentY = startY;
+    
+    table.forEach((row, rowIndex) => {
+      let maxCellHeight = 0;
+      const cellTexts: string[][] = [];
+      
+      // Prepare cell texts and calculate max height
+      row.forEach((cell, cellIndex) => {
+        const cellText = doc.splitTextToSize(cell, colWidth - 4);
+        cellTexts.push(cellText);
+        const cellHeight = cellText.length * 6;
+        maxCellHeight = Math.max(maxCellHeight, cellHeight);
       });
-    
-    return cleanText;
-  };
-
-  const addTableToPdf = (pdf: jsPDF, table: any, startY: number, margin: number, maxWidth: number): number => {
-    let yPosition = startY;
-    const cellHeight = 8;
-    const headerHeight = 10;
-    
-    // Calculate column widths
-    const numCols = table.headers.length;
-    const colWidth = (maxWidth - 10) / numCols;
-    
-    // Draw table header
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFillColor(59, 130, 246); // Blue background
-    pdf.rect(margin, yPosition, maxWidth, headerHeight, 'F');
-    
-    // Header text
-    pdf.setTextColor(255, 255, 255); // White text
-    table.headers.forEach((header: string, colIndex: number) => {
-      const xPos = margin + (colIndex * colWidth) + 2;
-      const cleanHeader = cleanTextForPdf(header);
-      pdf.text(cleanHeader, xPos, yPosition + 7);
-    });
-    
-    yPosition += headerHeight;
-    
-    // Draw table rows
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(0, 0, 0); // Black text
-    
-    table.rows.forEach((row: string[], rowIndex: number) => {
-      if (yPosition > pdf.internal.pageSize.getHeight() - 30) {
-        pdf.addPage();
-        yPosition = 30;
+      
+      // Check if we need a new page
+      if (currentY + maxCellHeight > doc.internal.pageSize.height - 20) {
+        doc.addPage();
+        currentY = 20;
       }
       
-      // Alternate row colors
-      if (rowIndex % 2 === 0) {
-        pdf.setFillColor(248, 250, 252); // Light gray
-        pdf.rect(margin, yPosition, maxWidth, cellHeight, 'F');
+      // Draw row background for header
+      if (rowIndex === 0) {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(margin, currentY, tableWidth, maxCellHeight, 'F');
       }
       
-      // Draw cell borders and content
-      row.forEach((cell: string, colIndex: number) => {
-        const xPos = margin + (colIndex * colWidth);
-        const cleanCell = cleanTextForPdf(cell);
+      // Draw cells
+      row.forEach((cell, cellIndex) => {
+        const x = margin + (cellIndex * colWidth);
         
         // Draw cell border
-        pdf.setDrawColor(209, 213, 219); // Gray border
-        pdf.rect(xPos, yPosition, colWidth, cellHeight);
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(x, currentY, colWidth, maxCellHeight);
         
-        // Add cell text
-        const lines = pdf.splitTextToSize(cleanCell, colWidth - 4);
-        pdf.text(lines[0] || '', xPos + 2, yPosition + 6);
+        // Add text
+        doc.setFontSize(9);
+        doc.setTextColor(rowIndex === 0 ? 60 : 80);
+        const cellText = cellTexts[cellIndex];
+        cellText.forEach((line: string, lineIndex: number) => {
+          doc.text(line, x + 2, currentY + 8 + (lineIndex * 6));
+        });
       });
       
-      yPosition += cellHeight;
+      currentY += maxCellHeight;
     });
     
-    return yPosition + 10;
+    return currentY + 10;
   };
 
-  const generatePDF = () => {
+  const downloadPdf = () => {
     if (selectedMessages.size === 0) {
+      alert('Please select at least one message to download.');
       return;
     }
 
-    const pdf = new jsPDF();
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const margin = 15;
-    const maxWidth = pageWidth - 2 * margin;
-    let yPosition = 25;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    let yPosition = 20;
 
-    // Add title
-    pdf.setFontSize(20);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(59, 130, 246); // Blue color
-    pdf.text('Chat Conversation Export', margin, yPosition);
+    // Title
+    doc.setFontSize(16);
+    doc.setTextColor(60, 60, 60);
+    doc.text('Chat Conversation', pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 20;
 
-    // Filter and sort selected messages
-    const selectedMessagesList = messages
-      .filter(msg => selectedMessages.has(msg.id))
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const selectedMessagesList = messages.filter(msg => selectedMessages.has(msg.id));
 
     selectedMessagesList.forEach((message, index) => {
       // Check if we need a new page
-      if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
-        pdf.addPage();
-        yPosition = 25;
+      if (yPosition > doc.internal.pageSize.height - 40) {
+        doc.addPage();
+        yPosition = 20;
       }
 
-      // Message sender styling
-      const isUser = message.sender === 'user';
-      
-      // Add sender label with colored background
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      
-      if (isUser) {
-        pdf.setFillColor(59, 130, 246); // Blue for user
-        pdf.setTextColor(255, 255, 255); // White text
+      // Message header with colored sender label
+      doc.setFontSize(12);
+      if (message.sender === 'user') {
+        doc.setTextColor(59, 130, 246); // Blue for user
+        doc.text('User:', 20, yPosition);
       } else {
-        pdf.setFillColor(147, 51, 234); // Purple for AI
-        pdf.setTextColor(255, 255, 255); // White text
+        doc.setTextColor(147, 51, 234); // Purple for assistant
+        doc.text('AI Assistant:', 20, yPosition);
       }
-      
-      const senderLabel = isUser ? 'You' : 'AI Assistant';
-      const labelWidth = pdf.getTextWidth(senderLabel) + 10;
-      
-      pdf.roundedRect(margin, yPosition - 8, labelWidth, 12, 3, 3, 'F');
-      pdf.text(senderLabel, margin + 5, yPosition - 1);
-      yPosition += 15;
+      yPosition += 10;
 
       // Message content
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(0, 0, 0); // Black text
-      pdf.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.setFontSize(10);
+
+      // Check if message contains tables
+      const table = parseTableFromText(message.content);
       
-      // Check for tables in the message
-      const tables = detectTablesInText(message.content);
-      
-      if (tables.length > 0) {
-        // Split content to handle text and tables separately
-        const contentLines = message.content.split('\n');
-        let textContent = '';
-        let inTable = false;
+      if (table) {
+        // Split content into text and table parts
+        const lines = message.content.split('\n');
+        const textLines = lines.filter(line => !line.includes('|') || line.trim() === '');
+        const textContent = textLines.join('\n').trim();
         
-        contentLines.forEach(line => {
-          const hasTableMarkers = line.includes('|') || /\s{3,}/.test(line);
-          if (!hasTableMarkers) {
-            textContent += line + '\n';
-          }
-        });
-        
-        // Add text content first
-        if (textContent.trim()) {
-          const cleanText = cleanTextForPdf(textContent);
-          const lines = pdf.splitTextToSize(cleanText, maxWidth);
-          
-          lines.forEach((line: string) => {
-            if (yPosition > pdf.internal.pageSize.getHeight() - 25) {
-              pdf.addPage();
-              yPosition = 25;
+        // Add text content if exists
+        if (textContent) {
+          const textLines = doc.splitTextToSize(textContent, pageWidth - 40);
+          textLines.forEach((line: string) => {
+            if (yPosition > doc.internal.pageSize.height - 20) {
+              doc.addPage();
+              yPosition = 20;
             }
-            pdf.text(line, margin, yPosition);
+            doc.text(line, 20, yPosition);
             yPosition += 6;
           });
-          
           yPosition += 5;
         }
         
-        // Add tables
-        tables.forEach((table) => {
-          if (yPosition > pdf.internal.pageSize.getHeight() - 60) {
-            pdf.addPage();
-            yPosition = 25;
-          }
-          yPosition = addTableToPdf(pdf, table, yPosition, margin, maxWidth);
-        });
+        // Add table
+        yPosition = addTableToPdf(doc, table, yPosition);
       } else {
-        // No tables, just add text content
-        const cleanContent = cleanTextForPdf(message.content);
-        const lines = pdf.splitTextToSize(cleanContent, maxWidth);
-        
+        // Regular text content
+        const lines = doc.splitTextToSize(message.content, pageWidth - 40);
         lines.forEach((line: string) => {
-          if (yPosition > pdf.internal.pageSize.getHeight() - 25) {
-            pdf.addPage();
-            yPosition = 25;
+          if (yPosition > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            yPosition = 20;
           }
-          pdf.text(line, margin, yPosition);
+          doc.text(line, 20, yPosition);
           yPosition += 6;
         });
       }
 
-      yPosition += 15; // Add space between messages
+      yPosition += 10;
+
+      // Add separator line between messages
+      if (index < selectedMessagesList.length - 1) {
+        doc.setDrawColor(220, 220, 220);
+        doc.line(20, yPosition, pageWidth - 20, yPosition);
+        yPosition += 10;
+      }
     });
 
-    // Save the PDF
-    const fileName = `chat-export-${new Date().toISOString().split('T')[0]}.pdf`;
-    pdf.save(fileName);
-    
-    // Reset state
-    setShowCheckboxes(false);
-    setSelectedMessages(new Set());
+    doc.save('chat-conversation.pdf');
   };
 
-  const nonWelcomeMessages = messages.filter(msg => !msg.id.startsWith('welcome-'));
-
-  if (nonWelcomeMessages.length === 0) {
-    return null;
-  }
+  const toggleSelectAll = () => {
+    if (selectedMessages.size === messages.length) {
+      setSelectedMessages(new Set());
+    } else {
+      setSelectedMessages(new Set(messages.map(msg => msg.id)));
+    }
+  };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 border-b border-gray-200">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setShowCheckboxes(!showCheckboxes)}
-        className="flex items-center gap-2"
-      >
-        <FileText className="h-4 w-4" />
-        {showCheckboxes ? 'Cancel Selection' : 'Select for PDF'}
-      </Button>
-
-      {showCheckboxes && (
-        <>
+    <div className="bg-white border-b border-gray-200 p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
           <Button
-            variant="ghost"
+            onClick={() => setShowCheckboxes(!showCheckboxes)}
+            variant="outline"
             size="sm"
-            onClick={selectAllMessages}
-            className="text-blue-600 hover:text-blue-700"
+            className="flex items-center space-x-2"
           >
-            Select All
+            {showCheckboxes ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+            <span>{showCheckboxes ? 'Hide Selection' : 'Select Messages'}</span>
           </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearSelection}
-            className="text-gray-600 hover:text-gray-700"
-          >
-            Clear Selection
-          </Button>
+          {showCheckboxes && (
+            <>
+              <Button
+                onClick={toggleSelectAll}
+                variant="outline"
+                size="sm"
+              >
+                {selectedMessages.size === messages.length ? 'Deselect All' : 'Select All'}
+              </Button>
+              
+              <Badge variant="secondary">
+                {selectedMessages.size} selected
+              </Badge>
+            </>
+          )}
+        </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-sm text-gray-600">
-              {selectedMessages.size} selected
-            </span>
-            <Button
-              onClick={generatePDF}
-              disabled={selectedMessages.size === 0}
-              size="sm"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-          </div>
-        </>
-      )}
+        {showCheckboxes && selectedMessages.size > 0 && (
+          <Button
+            onClick={downloadPdf}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <FileDown className="w-4 h-4" />
+            <span>Download PDF</span>
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
