@@ -1,13 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, MessageSquare, Trash2, Edit2, Check, X } from 'lucide-react';
-import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Settings, Trash2, Menu, MessagesSquare, LayoutGrid } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from "@/hooks/use-toast";
 
 interface ChatSession {
   id: string;
@@ -17,17 +15,102 @@ interface ChatSession {
 }
 
 interface ChatSidebarProps {
-  currentSessionId: string | null;
-  onSessionSelect: (sessionId: string) => void;
   onNewChat: () => void;
+  currentSessionId: string | null;
+  onSelectSession: (sessionId: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-const ChatSidebar = ({ currentSessionId, onSessionSelect, onNewChat }: ChatSidebarProps) => {
-  const { user } = useAuth();
+const ChatSidebar = ({ onNewChat, currentSessionId, onSelectSession, isCollapsed, onToggleCollapse }: ChatSidebarProps) => {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingSession, setEditingSession] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
+  const { user } = useAuth();
+
+  const fetchSessions = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Use a more resilient approach with timeout and retry
+      const fetchWithTimeout = async (retries = 3) => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
+          const { data, error } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false });
+          
+          clearTimeout(timeoutId);
+          
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          if (retries > 0) {
+            console.log(`Retrying fetch sessions... (${retries} attempts left)`);
+            await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+            return fetchWithTimeout(retries - 1);
+          }
+          throw error;
+        }
+      };
+      
+      const data = await fetchWithTimeout();
+      setSessions(data || []);
+    } catch (error: any) {
+      console.error('Error fetching sessions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load chat sessions. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('chat_sessions')
+        .delete()
+        .eq('id', sessionId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Also delete associated messages
+      await supabase
+        .from('messages')
+        .delete()
+        .eq('session_id', sessionId);
+
+      toast({
+        title: "Success",
+        description: "Chat session deleted",
+      });
+
+      fetchSessions();
+      
+      if (currentSessionId === sessionId) {
+        onNewChat();
+      }
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete chat session",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -35,269 +118,93 @@ const ChatSidebar = ({ currentSessionId, onSessionSelect, onNewChat }: ChatSideb
     }
   }, [user]);
 
-  // Add real-time listener for sessions
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('chat_sessions_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_sessions',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Session change:', payload);
-          fetchSessions(); // Refresh sessions when changes occur
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
-  const fetchSessions = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-      setSessions(data || []);
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteSession = async (sessionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('chat_sessions')
-        .delete()
-        .eq('id', sessionId);
-
-      if (error) throw error;
-
-      setSessions(sessions.filter(s => s.id !== sessionId));
-      
-      if (currentSessionId === sessionId) {
-        onNewChat();
-      }
-
-      toast({
-        title: "Session deleted",
-        description: "Chat session has been removed.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error deleting session",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditTitle = async (sessionId: string) => {
-    if (!editTitle.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from('chat_sessions')
-        .update({ title: editTitle.trim(), updated_at: new Date().toISOString() })
-        .eq('id', sessionId);
-
-      if (error) throw error;
-
-      setSessions(sessions.map(s => 
-        s.id === sessionId 
-          ? { ...s, title: editTitle.trim(), updated_at: new Date().toISOString() }
-          : s
-      ));
-
-      setEditingSession(null);
-      setEditTitle('');
-
-      toast({
-        title: "Title updated",
-        description: "Session title has been changed.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error updating title",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const startEditing = (session: ChatSession) => {
-    setEditingSession(session.id);
-    setEditTitle(session.title);
-  };
-
-  const cancelEditing = () => {
-    setEditingSession(null);
-    setEditTitle('');
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffInHours < 168) { // 1 week
-      return date.toLocaleDateString([], { weekday: 'short' });
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-  };
-
-  if (isLoading) {
+  if (isCollapsed) {
     return (
-      <div className="w-80 bg-gray-50 border-r border-gray-200 p-4">
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-gray-200 rounded"></div>
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-12 bg-gray-200 rounded"></div>
-          ))}
+      <div className="w-16 h-full border-r bg-muted/40 flex flex-col items-center py-4">
+        <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="mb-6">
+          <Menu className="h-5 w-5" />
+        </Button>
+        <Button onClick={onNewChat} size="icon" className="mb-6">
+          <Plus className="h-5 w-5" />
+        </Button>
+        <div className="mt-auto">
+          <Button variant="ghost" size="icon">
+            <Settings className="h-5 w-5" />
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
-      {/* Header */}
-      <div className="p-8 border-b border-gray-200">
-        <Button
-          onClick={onNewChat}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Chat
+    <div className="w-64 h-full border-r bg-muted/40 flex flex-col">
+      <div className="flex items-center p-4 border-b">
+        <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="mr-2">
+          <Menu className="h-5 w-5" />
+        </Button>
+        <h2 className="font-semibold flex-1 text-center">AI Cost Optimizer</h2>
+      </div>
+      
+      <div className="p-3">
+        <Button onClick={onNewChat} className="w-full">
+          <Plus className="mr-2 h-4 w-4" /> New Chat
         </Button>
       </div>
-
-      {/* Sessions List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {sessions.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+      
+      <div className="flex-1 overflow-auto">
+        {isLoading ? (
+          <div className="p-3 space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-2">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="space-y-1 flex-1">
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
+            <MessagesSquare className="h-10 w-10 mb-3" />
             <p>No chat sessions yet</p>
-            <p className="text-sm">Start a new conversation!</p>
+            <p className="text-sm">Start a new conversation by clicking the New Chat button</p>
           </div>
         ) : (
-          sessions.map((session) => (
-            <Card
-              key={session.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-md group ${
-                currentSessionId === session.id
-                  ? 'bg-blue-50 border-blue-200 shadow-sm'
-                  : 'bg-white hover:bg-gray-50'
-              }`}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                  <div 
-                    className="flex-1 min-w-0"
-                    onClick={() => editingSession !== session.id && onSessionSelect(session.id)}
-                  >
-                    {editingSession === session.id ? (
-                      <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                        <Input
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          className="h-8 text-sm"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleEditTitle(session.id);
-                            } else if (e.key === 'Escape') {
-                              cancelEditing();
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEditTitle(session.id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={cancelEditing}
-                          className="h-8 w-8 p-0"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <h3 className="font-medium text-sm text-gray-900 truncate">
-                          {session.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDate(session.updated_at)}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  
-                  {editingSession !== session.id && (
-                    <div className="flex items-center space-x-1 ml-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditing(session);
-                        }}
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-gray-200"
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSession(session.id);
-                        }}
-                        className="h-8 w-8 p-0 text-black-600 hover:bg-purple-600 hover:text-white"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-
-                    </div>
-                  )}
+          <div className="p-3 space-y-1">
+            {sessions.map((session) => (
+              <div
+                key={session.id}
+                onClick={() => onSelectSession(session.id)}
+                className={`flex items-center justify-between p-2 rounded-md hover:bg-accent cursor-pointer ${
+                  currentSessionId === session.id ? "bg-accent" : ""
+                }`}
+              >
+                <div className="truncate flex-1">
+                  <span className="text-sm">{session.title}</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => deleteSession(session.id, e)}
+                  className="h-7 w-7 p-0 opacity-50 hover:opacity-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <Badge variant="secondary" className="w-full justify-center bg-green-100 text-green-700 border-green-200">
-          🟢 AI Agent Online
-        </Badge>
+      
+      <div className="mt-auto p-3 border-t">
+        <div className="flex justify-center space-x-2">
+          <Button variant="outline" size="sm" onClick={() => window.location.href = '/'}>
+            <LayoutGrid className="h-4 w-4 mr-1" /> Dashboard
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-1" /> Settings
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ import {
   ZoomIn,
   ZoomOut,
   Upload,
-  Template,
+  FileCode2,
   PanelLeftClose,
   PanelRightClose
 } from 'lucide-react';

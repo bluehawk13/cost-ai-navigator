@@ -43,7 +43,7 @@ const WorkflowBuilder = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   const { saveWorkflow, loadWorkflow } = useWorkflows();
-  const { zoomIn, zoomOut } = useReactFlow();
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -77,7 +77,7 @@ const WorkflowBuilder = () => {
   }, [setNodes]);
 
   const getDefaultConfig = (nodeType: string, subtype: string) => {
-    const configs = {
+    const configs: Record<string, Record<string, any>> = {
       dataSource: {
         file: { acceptedTypes: ['pdf', 'txt', 'csv'], maxSize: '10MB' },
         api: { url: '', method: 'GET', headers: {} },
@@ -114,7 +114,7 @@ const WorkflowBuilder = () => {
         slack: { channel: '', webhook: '' }
       }
     };
-    return configs[nodeType as keyof typeof configs]?.[subtype] || {};
+    return configs[nodeType]?.[subtype] || {};
   };
 
   const handleNewWorkflow = useCallback(() => {
@@ -180,6 +180,15 @@ const WorkflowBuilder = () => {
     });
   }, []);
 
+  // Fit view when nodes change
+  React.useEffect(() => {
+    if (nodes.length > 0) {
+      setTimeout(() => {
+        fitView({ padding: 0.2 });
+      }, 100);
+    }
+  }, [nodes.length, fitView]);
+
   return (
     <div className={`h-screen flex flex-col ${isDarkMode ? 'dark' : ''}`}>
       {/* Top Navigation */}
@@ -217,7 +226,7 @@ const WorkflowBuilder = () => {
             nodeTypes={nodeTypes}
             fitView
             attributionPosition="bottom-left"
-            className="bg-gray-50"
+            className={`bg-gray-50 ${isDarkMode ? 'dark' : ''}`}
           >
             <Background color="#e5e7eb" gap={16} />
             <Controls />

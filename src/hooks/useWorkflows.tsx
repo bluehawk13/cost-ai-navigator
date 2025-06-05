@@ -111,19 +111,23 @@ export const useWorkflows = () => {
           workflow_id: savedWorkflow.id,
           node_id: node.id,
           node_type: node.type || 'default',
-          subtype: (node.data?.subtype as string) || null,
+          subtype: node.data?.subtype as string || null,
           label: String(node.data?.label || ''),
           position_x: node.position.x,
           position_y: node.position.y,
-          config: (node.data?.config || {}) as any,
-          style: (node.style || {}) as any
+          config: node.data?.config || {},
+          style: node.style || {}
         }));
 
-        const { error: nodesError } = await supabase
-          .from('workflow_nodes')
-          .insert(nodeData);
-
-        if (nodesError) throw nodesError;
+        // Insert nodes in batches to avoid resource errors
+        for (let i = 0; i < nodeData.length; i += 10) {
+          const batch = nodeData.slice(i, i + 10);
+          const { error: nodesError } = await supabase
+            .from('workflow_nodes')
+            .insert(batch);
+          
+          if (nodesError) throw nodesError;
+        }
       }
 
       // Save edges
@@ -136,14 +140,18 @@ export const useWorkflows = () => {
           source_handle: edge.sourceHandle || null,
           target_handle: edge.targetHandle || null,
           edge_type: edge.type || 'default',
-          style: (edge.style || {}) as any
+          style: edge.style || {}
         }));
 
-        const { error: edgesError } = await supabase
-          .from('workflow_edges')
-          .insert(edgeData);
-
-        if (edgesError) throw edgesError;
+        // Insert edges in batches to avoid resource errors
+        for (let i = 0; i < edgeData.length; i += 10) {
+          const batch = edgeData.slice(i, i + 10);
+          const { error: edgesError } = await supabase
+            .from('workflow_edges')
+            .insert(batch);
+          
+          if (edgesError) throw edgesError;
+        }
       }
 
       toast({
@@ -206,7 +214,7 @@ export const useWorkflows = () => {
           subtype: node.subtype,
           config: node.config
         },
-        style: (node.style as React.CSSProperties) || {}
+        style: node.style || {}
       }));
 
       const edges: Edge[] = (edgesData || []).map(edge => ({
@@ -216,7 +224,7 @@ export const useWorkflows = () => {
         sourceHandle: edge.source_handle,
         targetHandle: edge.target_handle,
         type: edge.edge_type,
-        style: (edge.style as React.CSSProperties) || {}
+        style: edge.style || {}
       }));
 
       return { workflow, nodes, edges };

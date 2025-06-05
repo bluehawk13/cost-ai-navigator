@@ -75,7 +75,7 @@ export const useChatSession = () => {
       
       // Load session messages
       const { data: messagesData, error: messagesError } = await supabase
-        .from('chat_messages')
+        .from('messages')
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
@@ -85,7 +85,8 @@ export const useChatSession = () => {
       setCurrentSessionId(sessionId);
       
       if (messagesData && messagesData.length > 0) {
-        setMessages(messagesData);
+        // Type assertion to ensure messages match the Message interface
+        setMessages(messagesData as Message[]);
       } else {
         // If no messages, add welcome message
         setMessages([getWelcomeMessage()]);
@@ -107,19 +108,19 @@ export const useChatSession = () => {
 
     try {
       const { data, error } = await supabase
-        .from('chat_messages')
+        .from('messages')
         .insert({
           session_id: currentSessionId,
           content,
           sender,
-          user_id: user.id
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      setMessages(prev => [...prev, data]);
+      // Type assertion to ensure the new message matches the Message interface
+      setMessages(prev => [...prev, data as Message]);
 
       // Update session's updated_at timestamp
       await supabase

@@ -19,7 +19,7 @@ import {
   Settings
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
-import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, Tooltip, Pie } from 'recharts';
 
 interface WorkflowActionsPanelProps {
   nodes: Node[];
