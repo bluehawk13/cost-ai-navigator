@@ -1,17 +1,17 @@
 
+const firebaseConfig = {
+  apiKey: "AIzaSyBH8vCZk4qO5mH2g6vK3dF8qR7sT9pL1mN2",
+  authDomain: "ai-cost-optimizer.firebaseapp.com",
+  projectId: "ai-cost-optimizer",
+  storageBucket: "ai-cost-optimizer.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef123456789012345",
+  measurementId: "G-ABCDEFGHIJ"
+};
+
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-
-const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id",
-  measurementId: "your-measurement-id"
-};
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

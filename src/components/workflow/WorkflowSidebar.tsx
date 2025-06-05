@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +49,13 @@ const WorkflowSidebar = ({
     }
 
     try {
-      await saveWorkflow(workflowName, workflowDescription, nodes, edges, currentWorkflowId);
+      await saveWorkflow({
+        name: workflowName,
+        description: workflowDescription,
+        nodes,
+        edges,
+        workflowId: currentWorkflowId
+      });
       setSaveDialogOpen(false);
       setWorkflowName('');
       setWorkflowDescription('');

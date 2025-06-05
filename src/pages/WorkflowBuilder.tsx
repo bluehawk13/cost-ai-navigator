@@ -1,6 +1,7 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
+  ReactFlowProvider,
   ReactFlow,
   Node,
   Edge,
@@ -34,7 +35,7 @@ const nodeTypes: NodeTypes = {
   output: OutputNode,
 };
 
-const WorkflowBuilder = () => {
+const WorkflowBuilderInner = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | undefined>();
@@ -125,7 +126,13 @@ const WorkflowBuilder = () => {
 
   const handleSaveWorkflow = useCallback(async (name: string, description: string) => {
     try {
-      const workflowId = await saveWorkflow(name, description, nodes, edges, currentWorkflowId);
+      const workflowId = await saveWorkflow({
+        name,
+        description,
+        nodes,
+        edges,
+        workflowId: currentWorkflowId
+      });
       if (workflowId && !currentWorkflowId) {
         setCurrentWorkflowId(workflowId);
       }
@@ -258,6 +265,14 @@ const WorkflowBuilder = () => {
         />
       </div>
     </div>
+  );
+};
+
+const WorkflowBuilder = () => {
+  return (
+    <ReactFlowProvider>
+      <WorkflowBuilderInner />
+    </ReactFlowProvider>
   );
 };
 
