@@ -111,7 +111,7 @@ export const useWorkflows = () => {
           workflow_id: savedWorkflow.id,
           node_id: node.id,
           node_type: node.type || 'default',
-          subtype: node.data?.subtype || null,
+          subtype: (node.data?.subtype as string) || null,
           label: String(node.data?.label || ''),
           position_x: node.position.x,
           position_y: node.position.y,
