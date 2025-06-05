@@ -39,6 +39,7 @@ const ChatInterfaceWithSidebar = () => {
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
   const [showCheckboxes, setShowCheckboxes] = useState(false);
   const [refreshSidebar, setRefreshSidebar] = useState(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -61,6 +62,10 @@ const ChatInterfaceWithSidebar = () => {
   const handleSessionSelect = async (sessionId: string) => {
     clearCurrentSession();
     await loadSession(sessionId);
+  };
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
   const toggleMessageView = (messageId: string) => {
@@ -208,8 +213,10 @@ const ChatInterfaceWithSidebar = () => {
       {/* Sidebar */}
       <ChatSidebar
         currentSessionId={currentSessionId}
-        onSessionSelect={handleSessionSelect}
+        onSelectSession={handleSessionSelect}
         onNewChat={handleNewChat}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
         key={refreshSidebar}
       />
 
