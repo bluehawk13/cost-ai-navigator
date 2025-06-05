@@ -112,11 +112,11 @@ export const useWorkflows = () => {
           node_id: node.id,
           node_type: node.type || 'default',
           subtype: node.data?.subtype || null,
-          label: node.data?.label || '',
+          label: String(node.data?.label || ''),
           position_x: node.position.x,
           position_y: node.position.y,
-          config: node.data?.config || {},
-          style: node.style || {}
+          config: (node.data?.config || {}) as any,
+          style: (node.style || {}) as any
         }));
 
         const { error: nodesError } = await supabase
@@ -136,7 +136,7 @@ export const useWorkflows = () => {
           source_handle: edge.sourceHandle || null,
           target_handle: edge.targetHandle || null,
           edge_type: edge.type || 'default',
-          style: edge.style || {}
+          style: (edge.style || {}) as any
         }));
 
         const { error: edgesError } = await supabase
@@ -206,7 +206,7 @@ export const useWorkflows = () => {
           subtype: node.subtype,
           config: node.config
         },
-        style: node.style as React.CSSProperties || {}
+        style: (node.style as React.CSSProperties) || {}
       }));
 
       const edges: Edge[] = (edgesData || []).map(edge => ({
@@ -216,7 +216,7 @@ export const useWorkflows = () => {
         sourceHandle: edge.source_handle,
         targetHandle: edge.target_handle,
         type: edge.edge_type,
-        style: edge.style as React.CSSProperties || {}
+        style: (edge.style as React.CSSProperties) || {}
       }));
 
       return { workflow, nodes, edges };
