@@ -15,11 +15,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Save, Upload } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import ComponentPalette from '@/components/workflow/ComponentPalette';
+import WorkflowSidebar from '@/components/workflow/WorkflowSidebar';
 import DataSourceNode from '@/components/workflow/nodes/DataSourceNode';
 import AIModelNode from '@/components/workflow/nodes/AIModelNode';
 import DatabaseNode from '@/components/workflow/nodes/DatabaseNode';
@@ -51,6 +50,7 @@ const WorkflowBuilder = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [currentWorkflowId, setCurrentWorkflowId] = useState<string | undefined>();
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -118,65 +118,20 @@ const WorkflowBuilder = () => {
     return configs[nodeType as keyof typeof configs]?.[subtype] || {};
   };
 
-  const exportWorkflow = useCallback(() => {
-    const workflow = {
-      nodes: nodes.map(node => ({
-        id: node.id,
-        type: node.type,
-        position: node.position,
-        data: node.data
-      })),
-      edges: edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        sourceHandle: edge.sourceHandle,
-        targetHandle: edge.targetHandle
-      })),
-      metadata: {
-        name: 'AI Workflow',
-        version: '1.0.0',
-        createdAt: new Date().toISOString(),
-        description: 'AI agent pipeline workflow'
-      }
-    };
+  const handleLoadWorkflow = useCallback((loadedNodes: Node[], loadedEdges: Edge[], workflowId: string) => {
+    setNodes(loadedNodes);
+    setEdges(loadedEdges);
+    setCurrentWorkflowId(workflowId);
+  }, [setNodes, setEdges]);
 
-    const blob = new Blob([JSON.stringify(workflow, null, 2)], {
-      type: 'application/json'
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ai-workflow.json';
-    a.click();
-    URL.revokeObjectURL(url);
-
+  const handleNewWorkflow = useCallback(() => {
+    setNodes([]);
+    setEdges([]);
+    setCurrentWorkflowId(undefined);
     toast({
-      title: "Workflow Exported",
-      description: "Workflow saved as JSON file",
+      title: "New Workflow",
+      description: "Started a new workflow",
     });
-  }, [nodes, edges]);
-
-  const saveWorkflow = useCallback(() => {
-    const workflow = { nodes, edges };
-    localStorage.setItem('ai-workflow', JSON.stringify(workflow));
-    toast({
-      title: "Workflow Saved",
-      description: "Workflow saved to local storage",
-    });
-  }, [nodes, edges]);
-
-  const loadWorkflow = useCallback(() => {
-    const saved = localStorage.getItem('ai-workflow');
-    if (saved) {
-      const workflow = JSON.parse(saved);
-      setNodes(workflow.nodes || []);
-      setEdges(workflow.edges || []);
-      toast({
-        title: "Workflow Loaded",
-        description: "Workflow loaded from local storage",
-      });
-    }
   }, [setNodes, setEdges]);
 
   const nodeStats = useMemo(() => {
@@ -200,7 +155,7 @@ const WorkflowBuilder = () => {
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex">
-      {/* Component Palette */}
+      {/* Left Sidebar - Component Palette */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Component Palette</h2>
@@ -216,22 +171,6 @@ const WorkflowBuilder = () => {
         
         <div className="flex-1 overflow-y-auto">
           <ComponentPalette onAddNode={addNode} />
-        </div>
-
-        {/* Workflow Actions */}
-        <div className="p-4 border-t border-gray-200 space-y-2">
-          <Button onClick={saveWorkflow} className="w-full" size="sm">
-            <Save className="h-4 w-4 mr-2" />
-            Save Workflow
-          </Button>
-          <Button onClick={loadWorkflow} variant="outline" className="w-full" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Load Workflow
-          </Button>
-          <Button onClick={exportWorkflow} variant="outline" className="w-full" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export JSON
-          </Button>
         </div>
       </div>
 
@@ -298,6 +237,22 @@ const WorkflowBuilder = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Right Sidebar - Workflow Management */}
+      <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Workflow Management</h2>
+        </div>
+        <div className="p-4">
+          <WorkflowSidebar
+            nodes={nodes}
+            edges={edges}
+            currentWorkflowId={currentWorkflowId}
+            onLoadWorkflow={handleLoadWorkflow}
+            onNewWorkflow={handleNewWorkflow}
+          />
+        </div>
       </div>
     </div>
   );
