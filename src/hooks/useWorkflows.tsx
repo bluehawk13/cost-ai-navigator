@@ -20,9 +20,16 @@ export const useWorkflows = () => {
 
   const fetchWorkflows = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('workflows')
         .select('*')
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -49,20 +56,33 @@ export const useWorkflows = () => {
     try {
       setLoading(true);
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+      
       // Save or update workflow
       const workflowData = {
         name,
         description,
         version: '1.0.0',
-        metadata: { nodeCount: nodes.length, edgeCount: edges.length }
+        metadata: { nodeCount: nodes.length, edgeCount: edges.length },
+        user_id: user.id
       };
 
       let savedWorkflow;
       if (workflowId) {
         const { data, error } = await supabase
           .from('workflows')
-          .update({ ...workflowData, updated_at: new Date().toISOString() })
+          .update({ 
+            name: workflowData.name,
+            description: workflowData.description,
+            version: workflowData.version,
+            metadata: workflowData.metadata,
+            updated_at: new Date().toISOString() 
+          })
           .eq('id', workflowId)
+          .eq('user_id', user.id)
           .select()
           .single();
         
@@ -91,7 +111,7 @@ export const useWorkflows = () => {
           workflow_id: savedWorkflow.id,
           node_id: node.id,
           node_type: node.type || 'default',
-          subtype: node.data?.subtype,
+          subtype: node.data?.subtype || null,
           label: node.data?.label || '',
           position_x: node.position.x,
           position_y: node.position.y,
@@ -113,8 +133,8 @@ export const useWorkflows = () => {
           edge_id: edge.id,
           source_node_id: edge.source,
           target_node_id: edge.target,
-          source_handle: edge.sourceHandle,
-          target_handle: edge.targetHandle,
+          source_handle: edge.sourceHandle || null,
+          target_handle: edge.targetHandle || null,
           edge_type: edge.type || 'default',
           style: edge.style || {}
         }));
@@ -186,7 +206,7 @@ export const useWorkflows = () => {
           subtype: node.subtype,
           config: node.config
         },
-        style: node.style
+        style: node.style as React.CSSProperties || {}
       }));
 
       const edges: Edge[] = (edgesData || []).map(edge => ({
@@ -196,7 +216,7 @@ export const useWorkflows = () => {
         sourceHandle: edge.source_handle,
         targetHandle: edge.target_handle,
         type: edge.edge_type,
-        style: edge.style
+        style: edge.style as React.CSSProperties || {}
       }));
 
       return { workflow, nodes, edges };
@@ -216,10 +236,16 @@ export const useWorkflows = () => {
 
   const deleteWorkflow = async (workflowId: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+
       const { error } = await supabase
         .from('workflows')
         .delete()
-        .eq('id', workflowId);
+        .eq('id', workflowId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
