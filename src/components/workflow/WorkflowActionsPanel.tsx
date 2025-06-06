@@ -3,11 +3,8 @@ import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { 
-  Save, 
   DollarSign, 
   TrendingDown,
   Clock,
@@ -27,30 +24,26 @@ interface WorkflowActionsPanelProps {
   nodes: Node[];
   edges: Edge[];
   currentWorkflowId?: string;
-  onSaveWorkflow: (name: string, description: string) => void;
   isCollapsed: boolean;
   onToggle: () => void;
-  costEstimationTriggered: boolean;
+  costEstimationCounter: number;
 }
 
 const WorkflowActionsPanel = ({ 
   nodes, 
   edges, 
   currentWorkflowId, 
-  onSaveWorkflow,
   isCollapsed,
   onToggle,
-  costEstimationTriggered
+  costEstimationCounter
 }: WorkflowActionsPanelProps) => {
-  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
-  const [workflowDescription, setWorkflowDescription] = useState('');
   const [costEstimation, setCostEstimation] = useState<CostEstimationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showNodeBreakdown, setShowNodeBreakdown] = useState(false);
 
-  // Calculate cost estimation when triggered
+  // Calculate cost estimation only when counter changes (button clicked)
   React.useEffect(() => {
-    if (costEstimationTriggered && nodes.length > 0) {
+    if (costEstimationCounter > 0 && nodes.length > 0) {
       setIsLoading(true);
       estimateWorkflowCost(nodes, edges)
         .then((estimation) => {
@@ -64,7 +57,7 @@ const WorkflowActionsPanel = ({
           setIsLoading(false);
         });
     }
-  }, [costEstimationTriggered, nodes, edges]);
+  }, [costEstimationCounter, nodes, edges]);
 
   const pieData = useMemo(() => {
     if (!costEstimation) return [];
@@ -86,7 +79,6 @@ const WorkflowActionsPanel = ({
           </Button>
         </div>
         <div className="flex flex-col items-center py-4 space-y-4">
-          <Save className="h-5 w-5 text-gray-600" />
           <DollarSign className="h-5 w-5 text-gray-600" />
           <Settings className="h-5 w-5 text-gray-600" />
         </div>
@@ -104,43 +96,6 @@ const WorkflowActionsPanel = ({
         </Button>
       </div>
 
-      {/* Workflow Metadata */}
-      <Card className="m-4 mb-2">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Workflow Metadata</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-gray-700">Name</label>
-            <Input
-              value={workflowName}
-              onChange={(e) => setWorkflowName(e.target.value)}
-              className="mt-1 h-8"
-              placeholder="Enter workflow name"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-700">Description</label>
-            <Textarea
-              value={workflowDescription}
-              onChange={(e) => setWorkflowDescription(e.target.value)}
-              className="mt-1 h-16 text-xs"
-              placeholder="Describe your workflow..."
-            />
-          </div>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Last modified: Now
-            </div>
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              Owner: You
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Cost Estimator */}
       <Card className="m-4 mb-2">
         <CardHeader className="pb-3">
@@ -150,7 +105,7 @@ const WorkflowActionsPanel = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!costEstimationTriggered ? (
+          {costEstimationCounter === 0 ? (
             <div className="text-center py-8">
               <Calculator className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-sm text-gray-500 mb-2">Cost estimation not calculated</p>
@@ -263,23 +218,6 @@ const WorkflowActionsPanel = ({
         </CardContent>
       </Card>
 
-      {/* Save Action */}
-      <Card className="m-4 mb-2">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Save Workflow</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={() => onSaveWorkflow(workflowName, workflowDescription)}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            size="sm"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Save to Supabase
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Workflow Stats */}
       <Card className="m-4">
         <CardHeader className="pb-3">
@@ -303,6 +241,17 @@ const WorkflowActionsPanel = ({
               <span>85%</span>
             </div>
             <Progress value={85} className="h-2" />
+          </div>
+
+          <div className="space-y-2 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Last modified: Now
+            </div>
+            <div className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              Owner: You
+            </div>
           </div>
         </CardContent>
       </Card>

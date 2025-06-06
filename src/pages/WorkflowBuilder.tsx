@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import {
   ReactFlowProvider,
@@ -42,7 +43,7 @@ const WorkflowBuilderInner = () => {
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | undefined>();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
-  const [costEstimationTriggered, setCostEstimationTriggered] = useState(false);
+  const [costEstimationCounter, setCostEstimationCounter] = useState(0);
   
   const { saveWorkflow, loadWorkflow } = useWorkflows();
   const { zoomIn, zoomOut, fitView } = useReactFlow();
@@ -152,7 +153,7 @@ const WorkflowBuilderInner = () => {
     setNodes([]);
     setEdges([]);
     setCurrentWorkflowId(undefined);
-    setCostEstimationTriggered(false);
+    setCostEstimationCounter(0);
   }, [setNodes, setEdges]);
 
   const handleSaveWorkflow = useCallback(async (name: string, description: string) => {
@@ -172,7 +173,31 @@ const WorkflowBuilderInner = () => {
     }
   }, [saveWorkflow, nodes, edges, currentWorkflowId]);
 
-  const handleLoadWorkflow = useCallback((workflowData: any) => {
+  const handleLoadWorkflow = useCallback(async (workflowId: string) => {
+    try {
+      const result = await loadWorkflow(workflowId);
+      if (result) {
+        setNodes(result.nodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            onConfigChange: handleNodeConfigChange
+          }
+        })));
+        setEdges(result.edges);
+        setCurrentWorkflowId(workflowId);
+        setCostEstimationCounter(0);
+        toast({
+          title: "Success",
+          description: `Loaded workflow: ${result.workflow.name}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading workflow:', error);
+    }
+  }, [loadWorkflow, setNodes, setEdges, handleNodeConfigChange]);
+
+  const handleLoadWorkflowData = useCallback((workflowData: any) => {
     if (workflowData.nodes) {
       setNodes(workflowData.nodes.map(node => ({
         ...node,
@@ -185,11 +210,11 @@ const WorkflowBuilderInner = () => {
     if (workflowData.edges) {
       setEdges(workflowData.edges);
     }
-    setCostEstimationTriggered(false);
+    setCostEstimationCounter(0);
   }, [setNodes, setEdges, handleNodeConfigChange]);
 
   const handleRunCostEstimation = useCallback(() => {
-    setCostEstimationTriggered(true);
+    setCostEstimationCounter(prev => prev + 1);
     toast({
       title: "Cost Estimation",
       description: "Running cost simulation across cloud providers...",
@@ -258,14 +283,15 @@ const WorkflowBuilderInner = () => {
         nodes={nodes}
         edges={edges}
         onNewWorkflow={handleNewWorkflow}
-        onSaveWorkflow={() => handleSaveWorkflow('Untitled Workflow', '')}
+        onSaveWorkflow={handleSaveWorkflow}
         onExportJSON={handleExportJSON}
         onExportPDF={handleExportPDF}
         onRunCostEstimation={handleRunCostEstimation}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onFitView={fitView}
-        onLoadWorkflow={handleLoadWorkflow}
+        onLoadWorkflow={handleLoadWorkflowData}
+        onLoadWorkflowFromDB={handleLoadWorkflow}
       />
 
       {/* Main Content Area */}
@@ -314,10 +340,9 @@ const WorkflowBuilderInner = () => {
           nodes={nodes}
           edges={edges}
           currentWorkflowId={currentWorkflowId}
-          onSaveWorkflow={handleSaveWorkflow}
           isCollapsed={!rightSidebarOpen}
           onToggle={() => setRightSidebarOpen(!rightSidebarOpen)}
-          costEstimationTriggered={costEstimationTriggered}
+          costEstimationCounter={costEstimationCounter}
         />
       </div>
     </div>

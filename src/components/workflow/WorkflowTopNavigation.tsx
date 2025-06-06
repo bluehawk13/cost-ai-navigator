@@ -18,16 +18,21 @@ import {
   Upload,
   ZoomIn,
   ZoomOut,
-  Maximize2
+  Maximize2,
+  FolderOpen
 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Node, Edge } from '@xyflow/react';
+import { useWorkflows } from '@/hooks/useWorkflows';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface WorkflowTopNavigationProps {
   nodes: Node[];
   edges: Edge[];
   onNewWorkflow: () => void;
-  onSaveWorkflow: () => void;
+  onSaveWorkflow: (name: string, description: string) => void;
   onExportJSON: () => void;
   onExportPDF: () => void;
   onRunCostEstimation: () => void;
@@ -35,6 +40,7 @@ interface WorkflowTopNavigationProps {
   onZoomOut: () => void;
   onFitView: () => void;
   onLoadWorkflow: (workflowData: any) => void;
+  onLoadWorkflowFromDB: (workflowId: string) => void;
 }
 
 const WorkflowTopNavigation = ({
@@ -48,8 +54,15 @@ const WorkflowTopNavigation = ({
   onZoomIn,
   onZoomOut,
   onFitView,
-  onLoadWorkflow
+  onLoadWorkflow,
+  onLoadWorkflowFromDB
 }: WorkflowTopNavigationProps) => {
+  const { workflows, loading } = useWorkflows();
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
+  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
+  const [workflowDescription, setWorkflowDescription] = useState('');
+
   const [templates] = useState([
     { 
       id: 'hr-automation', 
@@ -103,12 +116,6 @@ const WorkflowTopNavigation = ({
     }
   ]);
 
-  const [savedWorkflows] = useState([
-    { id: '1', name: 'Customer Support Bot', createdAt: '2024-01-15', description: 'AI-powered customer support automation' },
-    { id: '2', name: 'Data Processing Pipeline', createdAt: '2024-01-10', description: 'ETL workflow with validation' },
-    { id: '3', name: 'Email Campaign Generator', createdAt: '2024-01-05', description: 'Automated email content creation' }
-  ]);
-
   const handleNewWorkflow = () => {
     onNewWorkflow();
     toast({
@@ -117,8 +124,40 @@ const WorkflowTopNavigation = ({
     });
   };
 
-  const handleSaveWorkflow = () => {
-    onSaveWorkflow();
+  const handleSaveWorkflow = async () => {
+    if (!workflowName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a workflow name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await onSaveWorkflow(workflowName, workflowDescription);
+      setSaveDialogOpen(false);
+      setWorkflowName('Untitled Workflow');
+      setWorkflowDescription('');
+      toast({
+        title: "Success",
+        description: "Workflow saved to Supabase",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save workflow",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveAsTemplate = () => {
+    toast({
+      title: "Template Saved",
+      description: "Workflow saved as template (this feature will be implemented)",
+    });
+    setSaveAsTemplateDialogOpen(false);
   };
 
   const handleImportJSON = () => {
@@ -165,17 +204,6 @@ const WorkflowTopNavigation = ({
       toast({
         title: "Template Loaded",
         description: `Loaded ${template.name} template`,
-      });
-    }
-  };
-
-  const handleLoadSavedWorkflow = (workflowId: string) => {
-    const workflow = savedWorkflows.find(w => w.id === workflowId);
-    if (workflow) {
-      // In a real app, you would fetch the actual workflow data here
-      toast({
-        title: "Workflow Loaded",
-        description: `Loaded ${workflow.name}`,
       });
     }
   };
@@ -345,29 +373,45 @@ output "workflow_info" {
                 New Workflow
                 <MenubarShortcut>Ctrl+N</MenubarShortcut>
               </MenubarItem>
-              <MenubarItem onClick={handleSaveWorkflow}>
+              
+              <MenubarSeparator />
+              
+              <MenubarItem onClick={() => setSaveDialogOpen(true)}>
                 Save to Supabase
                 <MenubarShortcut>Ctrl+S</MenubarShortcut>
               </MenubarItem>
-              <MenubarItem onClick={handleSaveWorkflow}>
+              <MenubarItem onClick={() => setSaveAsTemplateDialogOpen(true)}>
                 Save As Template
               </MenubarItem>
+              
               <MenubarSeparator />
+              
               <MenubarItem onClick={handleImportJSON}>
                 Import JSON
               </MenubarItem>
-              <MenubarSeparator />
-              {savedWorkflows.map((workflow) => (
-                <MenubarItem 
-                  key={workflow.id}
-                  onClick={() => handleLoadSavedWorkflow(workflow.id)}
-                >
-                  <div>
-                    <div className="font-medium">{workflow.name}</div>
-                    <div className="text-xs text-gray-500">{workflow.description}</div>
-                  </div>
-                </MenubarItem>
-              ))}
+              
+              {/* Open Workflow submenu */}
+              {workflows.length > 0 && (
+                <>
+                  <MenubarSeparator />
+                  <MenubarItem disabled className="font-medium">
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Open Workflow
+                  </MenubarItem>
+                  {workflows.map((workflow) => (
+                    <MenubarItem 
+                      key={workflow.id}
+                      onClick={() => onLoadWorkflowFromDB(workflow.id)}
+                      className="pl-6"
+                    >
+                      <div>
+                        <div className="font-medium">{workflow.name}</div>
+                        <div className="text-xs text-gray-500">{workflow.description}</div>
+                      </div>
+                    </MenubarItem>
+                  ))}
+                </>
+              )}
             </MenubarContent>
           </MenubarMenu>
 
@@ -427,10 +471,69 @@ output "workflow_info" {
           <Calculator className="h-4 w-4 mr-1" />
           Estimate
         </Button>
-        <Button variant="outline" size="sm" onClick={handleSaveWorkflow}>
-          <Save className="h-4 w-4" />
-        </Button>
       </div>
+
+      {/* Save Workflow Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Workflow to Supabase</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                value={workflowName}
+                onChange={(e) => setWorkflowName(e.target.value)}
+                placeholder="Enter workflow name"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Description</label>
+              <Textarea
+                value={workflowDescription}
+                onChange={(e) => setWorkflowDescription(e.target.value)}
+                placeholder="Enter workflow description (optional)"
+                rows={3}
+              />
+            </div>
+            <Button onClick={handleSaveWorkflow} className="w-full">
+              Save Workflow
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save As Template Dialog */}
+      <Dialog open={saveAsTemplateDialogOpen} onOpenChange={setSaveAsTemplateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save As Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Template Name</label>
+              <Input
+                value={workflowName}
+                onChange={(e) => setWorkflowName(e.target.value)}
+                placeholder="Enter template name"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Description</label>
+              <Textarea
+                value={workflowDescription}
+                onChange={(e) => setWorkflowDescription(e.target.value)}
+                placeholder="Enter template description"
+                rows={3}
+              />
+            </div>
+            <Button onClick={handleSaveAsTemplate} className="w-full">
+              Save Template
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
