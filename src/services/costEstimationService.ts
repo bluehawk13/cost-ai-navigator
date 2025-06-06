@@ -75,9 +75,9 @@ export const transformWorkflowForEstimation = (nodes: Node[], edges: Edge[]): Wo
     nodes: nodes.map(node => ({
       id: node.id,
       type: node.type || 'unknown',
-      subtype: node.data?.subtype,
-      provider: node.data?.provider,
-      label: node.data?.label || node.id,
+      subtype: typeof node.data?.subtype === 'string' ? node.data.subtype : undefined,
+      provider: typeof node.data?.provider === 'string' ? node.data.provider : undefined,
+      label: typeof node.data?.label === 'string' ? node.data.label : node.id,
       config: node.data?.config || {},
       position: node.position
     })),
@@ -171,10 +171,10 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
 
     return {
       nodeId: node.id,
-      nodeName: node.data?.label || node.id,
+      nodeName: typeof node.data?.label === 'string' ? node.data.label : node.id,
       nodeType,
-      provider: node.data?.provider,
-      service: node.data?.subtype,
+      provider: typeof node.data?.provider === 'string' ? node.data.provider : undefined,
+      service: typeof node.data?.subtype === 'string' ? node.data.subtype : undefined,
       estimatedCost: parseFloat(cost.toFixed(2)),
       costUnit,
       breakdown: {
