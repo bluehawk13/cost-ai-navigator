@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import {
   ReactFlowProvider,
@@ -214,12 +213,17 @@ const WorkflowBuilderInner = () => {
   }, [setNodes, setEdges, handleNodeConfigChange]);
 
   const handleRunCostEstimation = useCallback(() => {
-    setCostEstimationCounter(prev => prev + 1);
+    console.log('Cost estimation button clicked, incrementing counter from', costEstimationCounter);
+    setCostEstimationCounter(prev => {
+      const newValue = prev + 1;
+      console.log('New cost estimation counter value:', newValue);
+      return newValue;
+    });
     toast({
       title: "Cost Estimation",
       description: "Running cost simulation across cloud providers...",
     });
-  }, []);
+  }, [costEstimationCounter]);
 
   const handleExportJSON = useCallback(() => {
     const workflow = {
@@ -343,6 +347,7 @@ const WorkflowBuilderInner = () => {
           isCollapsed={!rightSidebarOpen}
           onToggle={() => setRightSidebarOpen(!rightSidebarOpen)}
           costEstimationCounter={costEstimationCounter}
+          onSaveWorkflow={handleSaveWorkflow}
         />
       </div>
     </div>
