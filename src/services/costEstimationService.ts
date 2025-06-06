@@ -1,4 +1,5 @@
 
+
 import { Node, Edge } from '@xyflow/react';
 
 export interface WorkflowData {
@@ -70,6 +71,19 @@ export interface CostEstimationResponse {
   timestamp: string;
 }
 
+// Helper function to safely check if config has a property
+const hasProperty = (obj: unknown, prop: string): boolean => {
+  return obj !== null && obj !== undefined && typeof obj === 'object' && prop in obj;
+};
+
+// Helper function to safely get a property from config
+const getConfigProperty = (config: unknown, prop: string): any => {
+  if (hasProperty(config, prop)) {
+    return (config as any)[prop];
+  }
+  return undefined;
+};
+
 export const createWorkflowDescription = (nodes: Node[]): string => {
   if (nodes.length === 0) {
     return "Empty workflow with no components.";
@@ -87,8 +101,9 @@ export const createWorkflowDescription = (nodes: Node[]): string => {
 
     switch (nodeType) {
       case 'cloud':
-        if (provider && config?.service) {
-          components.push(`${provider.toUpperCase()} cloud service (${config.service})`);
+        const service = getConfigProperty(config, 'service');
+        if (provider && service) {
+          components.push(`${provider.toUpperCase()} cloud service (${service})`);
         } else if (provider) {
           components.push(`${provider.toUpperCase()} cloud provider`);
         } else {
@@ -97,10 +112,12 @@ export const createWorkflowDescription = (nodes: Node[]): string => {
         break;
 
       case 'aiModel':
-        if (provider && config?.model && config?.maxTokens) {
-          components.push(`${provider} AI model with ${config.model} and ${config.maxTokens} max tokens`);
-        } else if (provider && config?.model) {
-          components.push(`${provider} AI model with ${config.model}`);
+        const model = getConfigProperty(config, 'model');
+        const maxTokens = getConfigProperty(config, 'maxTokens');
+        if (provider && model && maxTokens) {
+          components.push(`${provider} AI model with ${model} and ${maxTokens} max tokens`);
+        } else if (provider && model) {
+          components.push(`${provider} AI model with ${model}`);
         } else if (provider) {
           components.push(`${provider} AI model`);
         } else {
@@ -219,8 +236,9 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
     // Adjust cost based on node type and configuration
     switch (nodeType) {
       case 'aiModel':
-        if (config?.maxTokens) {
-          cost = (config.maxTokens / 1000) * 0.002; // Simple token-based pricing
+        const maxTokens = getConfigProperty(config, 'maxTokens');
+        if (maxTokens && typeof maxTokens === 'number') {
+          cost = (maxTokens / 1000) * 0.002; // Simple token-based pricing
         } else {
           cost = Math.random() * 100 + 20;
         }
@@ -288,3 +306,4 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
     timestamp: new Date().toISOString()
   };
 };
+
