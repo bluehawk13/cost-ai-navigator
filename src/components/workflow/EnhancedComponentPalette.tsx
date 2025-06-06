@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +47,7 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed }: EnhancedComponentP
       id: 'cloud',
       name: '☁️ Cloud Providers',
       icon: <Cloud className="h-4 w-4" />,
-      expanded: true,
+      expanded: false,
       items: [
         { id: 'aws-lambda', name: 'AWS Lambda', type: 'dataSource', subtype: 'aws-lambda', cost: '$0.0000002/request', description: 'Serverless compute' },
         { id: 'aws-s3', name: 'AWS S3', type: 'dataSource', subtype: 'aws-s3', cost: '$0.023/GB', description: 'Object storage' },
@@ -63,7 +62,7 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed }: EnhancedComponentP
       id: 'ai-models',
       name: '🤖 AI Models',
       icon: <Bot className="h-4 w-4" />,
-      expanded: true,
+      expanded: false,
       items: [
         { id: 'gpt-4', name: 'GPT-4', type: 'aiModel', subtype: 'gpt4', cost: '$0.03/1k tokens', description: 'OpenAI\'s most capable model' },
         { id: 'gpt-3.5', name: 'GPT-3.5 Turbo', type: 'aiModel', subtype: 'gpt3.5', cost: '$0.001/1k tokens', description: 'Fast and efficient' },

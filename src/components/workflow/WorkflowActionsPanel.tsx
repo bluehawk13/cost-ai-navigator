@@ -8,15 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { 
   Save, 
-  Download, 
   DollarSign, 
   TrendingDown,
-  PieChart,
   Clock,
   User,
-  FileJson,
-  FileText,
-  Settings
+  Settings,
+  Calculator
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, Tooltip, Pie } from 'recharts';
@@ -26,9 +23,8 @@ interface WorkflowActionsPanelProps {
   edges: Edge[];
   currentWorkflowId?: string;
   onSaveWorkflow: (name: string, description: string) => void;
-  onExportJSON: () => void;
-  onExportPDF: () => void;
   isCollapsed: boolean;
+  costEstimationTriggered: boolean;
 }
 
 const WorkflowActionsPanel = ({ 
@@ -36,15 +32,21 @@ const WorkflowActionsPanel = ({
   edges, 
   currentWorkflowId, 
   onSaveWorkflow,
-  onExportJSON,
-  onExportPDF,
-  isCollapsed 
+  isCollapsed,
+  costEstimationTriggered
 }: WorkflowActionsPanelProps) => {
   const [workflowName, setWorkflowName] = useState('Untitled Workflow');
   const [workflowDescription, setWorkflowDescription] = useState('');
 
-  // Calculate cost estimation
+  // Calculate cost estimation only when triggered
   const costEstimation = useMemo(() => {
+    if (!costEstimationTriggered) {
+      return {
+        totalCost: 0,
+        breakdown: { llm: 0, database: 0, compute: 0, storage: 0 }
+      };
+    }
+
     let totalCost = 0;
     let breakdown = {
       llm: 0,
@@ -79,14 +81,14 @@ const WorkflowActionsPanel = ({
     });
 
     return { totalCost, breakdown };
-  }, [nodes]);
+  }, [nodes, costEstimationTriggered]);
 
   const pieData = [
     { name: 'LLM Costs', value: costEstimation.breakdown.llm, color: '#8b5cf6' },
     { name: 'Database', value: costEstimation.breakdown.database, color: '#10b981' },
     { name: 'Compute', value: costEstimation.breakdown.compute, color: '#3b82f6' },
     { name: 'Storage', value: costEstimation.breakdown.storage, color: '#f59e0b' }
-  ];
+  ].filter(item => item.value > 0);
 
   const optimizationTips = [
     "Switch to Claude Haiku to save 30% on LLM costs",
@@ -99,7 +101,6 @@ const WorkflowActionsPanel = ({
       <div className="w-12 bg-white border-l border-gray-200 flex flex-col items-center py-4 space-y-4">
         <Save className="h-5 w-5 text-gray-600" />
         <DollarSign className="h-5 w-5 text-gray-600" />
-        <Download className="h-5 w-5 text-gray-600" />
         <Settings className="h-5 w-5 text-gray-600" />
       </div>
     );
@@ -153,71 +154,87 @@ const WorkflowActionsPanel = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              ${costEstimation.totalCost.toFixed(2)}
+          {!costEstimationTriggered ? (
+            <div className="text-center py-8">
+              <Calculator className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-sm text-gray-500 mb-2">Cost estimation not calculated</p>
+              <p className="text-xs text-gray-400">Click "Estimate" in the top navigation to calculate costs</p>
             </div>
-            <div className="text-xs text-gray-500">per month (estimated)</div>
-          </div>
-
-          {/* Cost Breakdown Pie Chart */}
-          <div className="h-32">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={20}
-                  outerRadius={50}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: any) => `$${value.toFixed(2)}`} />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Cost Breakdown List */}
-          <div className="space-y-2">
-            {pieData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-sm" 
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span>{item.name}</span>
+          ) : (
+            <>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  ${costEstimation.totalCost.toFixed(2)}
                 </div>
-                <span className="font-medium">${item.value.toFixed(2)}</span>
+                <div className="text-xs text-gray-500">per month (estimated)</div>
               </div>
-            ))}
-          </div>
 
-          {/* Optimization Tips */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <TrendingDown className="h-3 w-3" />
-              Optimization Tips
-            </div>
-            {optimizationTips.map((tip, index) => (
-              <div key={index} className="text-xs text-gray-600 pl-5">
-                • {tip}
-              </div>
-            ))}
-          </div>
+              {/* Cost Breakdown Pie Chart */}
+              {pieData.length > 0 && (
+                <div className="h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={20}
+                        outerRadius={50}
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => `$${value.toFixed(2)}`} />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Cost Breakdown List */}
+              {pieData.length > 0 && (
+                <div className="space-y-2">
+                  {pieData.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-sm" 
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span>{item.name}</span>
+                      </div>
+                      <span className="font-medium">${item.value.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Optimization Tips */}
+              {costEstimation.totalCost > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                    <TrendingDown className="h-3 w-3" />
+                    Optimization Tips
+                  </div>
+                  {optimizationTips.map((tip, index) => (
+                    <div key={index} className="text-xs text-gray-600 pl-5">
+                      • {tip}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {/* Export Actions */}
+      {/* Save Action */}
       <Card className="m-4 mb-2">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Export Actions</CardTitle>
+          <CardTitle className="text-sm">Save Workflow</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent>
           <Button 
             onClick={() => onSaveWorkflow(workflowName, workflowDescription)}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -225,21 +242,6 @@ const WorkflowActionsPanel = ({
           >
             <Save className="h-4 w-4 mr-2" />
             Save to Supabase
-          </Button>
-          
-          <Button onClick={onExportJSON} variant="outline" className="w-full" size="sm">
-            <FileJson className="h-4 w-4 mr-2" />
-            Download JSON
-          </Button>
-          
-          <Button onClick={onExportPDF} variant="outline" className="w-full" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Export PDF Report
-          </Button>
-          
-          <Button variant="outline" className="w-full" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Generate Terraform
           </Button>
         </CardContent>
       </Card>

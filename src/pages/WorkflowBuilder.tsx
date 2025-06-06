@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import {
   ReactFlowProvider,
@@ -41,7 +40,7 @@ const WorkflowBuilderInner = () => {
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | undefined>();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [costEstimationTriggered, setCostEstimationTriggered] = useState(false);
   
   const { saveWorkflow, loadWorkflow } = useWorkflows();
   const { zoomIn, zoomOut, fitView } = useReactFlow();
@@ -122,6 +121,7 @@ const WorkflowBuilderInner = () => {
     setNodes([]);
     setEdges([]);
     setCurrentWorkflowId(undefined);
+    setCostEstimationTriggered(false);
   }, [setNodes, setEdges]);
 
   const handleSaveWorkflow = useCallback(async (name: string, description: string) => {
@@ -140,6 +140,14 @@ const WorkflowBuilderInner = () => {
       console.error('Error saving workflow:', error);
     }
   }, [saveWorkflow, nodes, edges, currentWorkflowId]);
+
+  const handleRunCostEstimation = useCallback(() => {
+    setCostEstimationTriggered(true);
+    toast({
+      title: "Cost Estimation",
+      description: "Running cost simulation across cloud providers...",
+    });
+  }, []);
 
   const handleExportJSON = useCallback(() => {
     const workflow = {
@@ -197,19 +205,18 @@ const WorkflowBuilderInner = () => {
   }, [nodes.length, fitView]);
 
   return (
-    <div className={`h-screen flex flex-col ${isDarkMode ? 'dark' : ''}`}>
+    <div className="h-screen flex flex-col">
       {/* Top Navigation */}
       <WorkflowTopNavigation
+        nodes={nodes}
+        edges={edges}
         onNewWorkflow={handleNewWorkflow}
         onSaveWorkflow={() => handleSaveWorkflow('Untitled Workflow', '')}
         onExportJSON={handleExportJSON}
         onExportPDF={handleExportPDF}
-        onZoomIn={zoomIn}
-        onZoomOut={zoomOut}
         onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
         onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        onRunCostEstimation={handleRunCostEstimation}
         leftSidebarOpen={leftSidebarOpen}
         rightSidebarOpen={rightSidebarOpen}
       />
@@ -233,7 +240,7 @@ const WorkflowBuilderInner = () => {
             nodeTypes={nodeTypes}
             fitView
             attributionPosition="bottom-left"
-            className={`bg-gray-50 ${isDarkMode ? 'dark' : ''}`}
+            className="bg-gray-50"
           >
             <Background color="#e5e7eb" gap={16} />
             <Controls />
@@ -259,9 +266,8 @@ const WorkflowBuilderInner = () => {
           edges={edges}
           currentWorkflowId={currentWorkflowId}
           onSaveWorkflow={handleSaveWorkflow}
-          onExportJSON={handleExportJSON}
-          onExportPDF={handleExportPDF}
           isCollapsed={!rightSidebarOpen}
+          costEstimationTriggered={costEstimationTriggered}
         />
       </div>
     </div>
