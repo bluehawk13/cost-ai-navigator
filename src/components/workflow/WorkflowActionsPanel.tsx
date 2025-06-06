@@ -13,10 +13,14 @@ import {
   Clock,
   User,
   Settings,
-  Calculator
+  Calculator,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, Tooltip, Pie } from 'recharts';
+import { estimateWorkflowCost, CostEstimationResponse, NodeCostBreakdown } from '@/services/costEstimationService';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface WorkflowActionsPanelProps {
   nodes: Node[];
@@ -37,64 +41,38 @@ const WorkflowActionsPanel = ({
 }: WorkflowActionsPanelProps) => {
   const [workflowName, setWorkflowName] = useState('Untitled Workflow');
   const [workflowDescription, setWorkflowDescription] = useState('');
+  const [costEstimation, setCostEstimation] = useState<CostEstimationResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showNodeBreakdown, setShowNodeBreakdown] = useState(false);
 
-  // Calculate cost estimation only when triggered
-  const costEstimation = useMemo(() => {
-    if (!costEstimationTriggered) {
-      return {
-        totalCost: 0,
-        breakdown: { llm: 0, database: 0, compute: 0, storage: 0 }
-      };
+  // Calculate cost estimation when triggered
+  React.useEffect(() => {
+    if (costEstimationTriggered && nodes.length > 0) {
+      setIsLoading(true);
+      estimateWorkflowCost(nodes, edges)
+        .then((estimation) => {
+          setCostEstimation(estimation);
+          console.log('Cost estimation received:', estimation);
+        })
+        .catch((error) => {
+          console.error('Cost estimation failed:', error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
+  }, [costEstimationTriggered, nodes, edges]);
 
-    let totalCost = 0;
-    let breakdown = {
-      llm: 0,
-      database: 0,
-      compute: 0,
-      storage: 0
-    };
-
-    nodes.forEach(node => {
-      switch (node.type) {
-        case 'aiModel':
-          const llmCost = Math.random() * 50 + 10; // Simulated cost
-          breakdown.llm += llmCost;
-          totalCost += llmCost;
-          break;
-        case 'database':
-          const dbCost = Math.random() * 20 + 5;
-          breakdown.database += dbCost;
-          totalCost += dbCost;
-          break;
-        case 'dataSource':
-          const computeCost = Math.random() * 15 + 3;
-          breakdown.compute += computeCost;
-          totalCost += computeCost;
-          break;
-        case 'output':
-          const storageCost = Math.random() * 5 + 1;
-          breakdown.storage += storageCost;
-          totalCost += storageCost;
-          break;
-      }
-    });
-
-    return { totalCost, breakdown };
-  }, [nodes, costEstimationTriggered]);
-
-  const pieData = [
-    { name: 'LLM Costs', value: costEstimation.breakdown.llm, color: '#8b5cf6' },
-    { name: 'Database', value: costEstimation.breakdown.database, color: '#10b981' },
-    { name: 'Compute', value: costEstimation.breakdown.compute, color: '#3b82f6' },
-    { name: 'Storage', value: costEstimation.breakdown.storage, color: '#f59e0b' }
-  ].filter(item => item.value > 0);
-
-  const optimizationTips = [
-    "Switch to Claude Haiku to save 30% on LLM costs",
-    "Use caching to reduce API calls by 40%",
-    "Consider batch processing for better efficiency"
-  ];
+  const pieData = useMemo(() => {
+    if (!costEstimation) return [];
+    
+    return [
+      { name: 'Compute', value: costEstimation.summary.totalCompute, color: '#3b82f6' },
+      { name: 'Storage', value: costEstimation.summary.totalStorage, color: '#10b981' },
+      { name: 'Network', value: costEstimation.summary.totalNetwork, color: '#f59e0b' },
+      { name: 'API Calls', value: costEstimation.summary.totalApiCalls, color: '#8b5cf6' }
+    ].filter(item => item.value > 0);
+  }, [costEstimation]);
 
   if (isCollapsed) {
     return (
@@ -160,7 +138,12 @@ const WorkflowActionsPanel = ({
               <p className="text-sm text-gray-500 mb-2">Cost estimation not calculated</p>
               <p className="text-xs text-gray-400">Click "Estimate" in the top navigation to calculate costs</p>
             </div>
-          ) : (
+          ) : isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-sm text-gray-500">Calculating costs...</p>
+            </div>
+          ) : costEstimation ? (
             <>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">
@@ -210,21 +193,54 @@ const WorkflowActionsPanel = ({
                 </div>
               )}
 
+              {/* Node-wise Cost Breakdown */}
+              <Collapsible open={showNodeBreakdown} onOpenChange={setShowNodeBreakdown}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-gray-50 rounded text-xs font-medium">
+                  <span>Node Cost Breakdown</span>
+                  {showNodeBreakdown ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2">
+                  {costEstimation.nodeBreakdown.map((nodeData) => (
+                    <div key={nodeData.nodeId} className="p-2 border border-gray-200 rounded text-xs">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium">{nodeData.nodeName}</span>
+                        <span className="text-green-600">${nodeData.estimatedCost}</span>
+                      </div>
+                      <div className="text-gray-500 text-xs">
+                        <div>Type: {nodeData.nodeType}</div>
+                        {nodeData.provider && <div>Provider: {nodeData.provider}</div>}
+                        {nodeData.service && <div>Service: {nodeData.service}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+
               {/* Optimization Tips */}
-              {costEstimation.totalCost > 0 && (
+              {costEstimation.optimizationSuggestions.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-700">
                     <TrendingDown className="h-3 w-3" />
                     Optimization Tips
                   </div>
-                  {optimizationTips.map((tip, index) => (
-                    <div key={index} className="text-xs text-gray-600 pl-5">
-                      • {tip}
+                  {costEstimation.optimizationSuggestions.map((tip, index) => (
+                    <div key={index} className="text-xs text-gray-600 pl-5 border-l-2 border-green-200">
+                      <div>• {tip.suggestion}</div>
+                      {tip.potentialSavings > 0 && (
+                        <div className="text-green-600 font-medium">
+                          Potential savings: ${tip.potentialSavings}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-sm text-red-500">Failed to calculate costs</p>
+              <p className="text-xs text-gray-400">Please try again</p>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -25,6 +25,7 @@ import AIModelNode from '@/components/workflow/nodes/AIModelNode';
 import DatabaseNode from '@/components/workflow/nodes/DatabaseNode';
 import LogicNode from '@/components/workflow/nodes/LogicNode';
 import OutputNode from '@/components/workflow/nodes/OutputNode';
+import CloudProviderNode from '@/components/workflow/nodes/CloudProviderNode';
 
 const nodeTypes: NodeTypes = {
   dataSource: DataSourceNode,
@@ -32,6 +33,7 @@ const nodeTypes: NodeTypes = {
   database: DatabaseNode,
   logic: LogicNode,
   output: OutputNode,
+  cloud: CloudProviderNode,
 };
 
 const WorkflowBuilderInner = () => {
@@ -57,15 +59,16 @@ const WorkflowBuilderInner = () => {
     [setEdges]
   );
 
-  const addNode = useCallback((nodeType: string, subtype: string, label: string) => {
+  const addNode = useCallback((nodeType: string, subtype: string, label: string, provider?: string) => {
     const newNode: Node = {
       id: `${nodeType}-${Date.now()}`,
-      type: nodeType,
+      type: nodeType === 'cloud' ? 'cloud' : nodeType,
       position: { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
       data: { 
         label,
         subtype,
-        config: getDefaultConfig(nodeType, subtype)
+        provider,
+        config: getDefaultConfig(nodeType, subtype, provider)
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -76,8 +79,21 @@ const WorkflowBuilderInner = () => {
     });
   }, [setNodes]);
 
-  const getDefaultConfig = (nodeType: string, subtype: string) => {
+  const getDefaultConfig = (nodeType: string, subtype: string, provider?: string) => {
     const configs: Record<string, Record<string, any>> = {
+      cloud: {
+        aws: { region: 'us-east-1', service: '' },
+        gcp: { region: 'us-central1', service: '' },
+        azure: { region: 'East US', service: '' },
+        oracle: { region: 'us-ashburn-1', service: '' }
+      },
+      aiModel: {
+        openai: { model: '', maxTokens: 2000, temperature: 0.7 },
+        anthropic: { model: '', maxTokens: 2000, temperature: 0.7 },
+        mistral: { model: '', maxTokens: 2000, temperature: 0.7 },
+        google: { model: '', maxTokens: 2000, temperature: 0.7 },
+        meta: { model: '', maxTokens: 2000, temperature: 0.7 }
+      },
       dataSource: {
         file: { acceptedTypes: ['pdf', 'txt', 'csv'], maxSize: '10MB' },
         api: { url: '', method: 'GET', headers: {} },
@@ -86,14 +102,6 @@ const WorkflowBuilderInner = () => {
         'aws-s3': { bucket: '', region: 'us-east-1' },
         'gcp-functions': { region: 'us-central1', runtime: 'python39' },
         'azure-blob': { account: '', container: '' }
-      },
-      aiModel: {
-        gpt4: { temperature: 0.7, maxTokens: 2000, model: 'gpt-4' },
-        claude: { temperature: 0.7, maxTokens: 2000, model: 'claude-3-sonnet' },
-        mistral: { temperature: 0.7, maxTokens: 2000, model: 'mistral-large' },
-        'aws-bedrock': { region: 'us-east-1', model: 'anthropic.claude-v2' },
-        'gcp-vertex': { project: '', location: 'us-central1' },
-        'azure-openai': { endpoint: '', deploymentId: '' }
       },
       database: {
         postgres: { connectionString: '', table: '' },
@@ -114,6 +122,11 @@ const WorkflowBuilderInner = () => {
         slack: { channel: '', webhook: '' }
       }
     };
+    
+    if (provider && configs[nodeType]?.[provider]) {
+      return configs[nodeType][provider];
+    }
+    
     return configs[nodeType]?.[subtype] || {};
   };
 
@@ -252,6 +265,7 @@ const WorkflowBuilderInner = () => {
                   case 'database': return '#10b981';
                   case 'logic': return '#f59e0b';
                   case 'output': return '#ef4444';
+                  case 'cloud': return '#06b6d4';
                   default: return '#6b7280';
                 }
               }}

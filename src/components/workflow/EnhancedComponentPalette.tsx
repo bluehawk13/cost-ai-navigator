@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ interface ComponentItem {
   name: string;
   type: string;
   subtype: string;
+  provider?: string;
   cost?: string;
   description: string;
   icon?: React.ReactNode;
@@ -36,7 +38,7 @@ interface ComponentCategory {
 }
 
 interface EnhancedComponentPaletteProps {
-  onAddNode: (nodeType: string, subtype: string, label: string) => void;
+  onAddNode: (nodeType: string, subtype: string, label: string, provider?: string) => void;
   isCollapsed: boolean;
 }
 
@@ -49,29 +51,23 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed }: EnhancedComponentP
       icon: <Cloud className="h-4 w-4" />,
       expanded: false,
       items: [
-        { id: 'aws-lambda', name: 'AWS Lambda', type: 'dataSource', subtype: 'aws-lambda', cost: '$0.0000002/request', description: 'Serverless compute' },
-        { id: 'aws-s3', name: 'AWS S3', type: 'dataSource', subtype: 'aws-s3', cost: '$0.023/GB', description: 'Object storage' },
-        { id: 'aws-bedrock', name: 'AWS Bedrock', type: 'aiModel', subtype: 'aws-bedrock', cost: '$0.01/1k tokens', description: 'Managed AI models' },
-        { id: 'gcp-vertex', name: 'GCP Vertex AI', type: 'aiModel', subtype: 'gcp-vertex', cost: '$0.008/1k tokens', description: 'Google AI platform' },
-        { id: 'gcp-functions', name: 'GCP Cloud Functions', type: 'dataSource', subtype: 'gcp-functions', cost: '$0.0000004/request', description: 'Serverless functions' },
-        { id: 'azure-openai', name: 'Azure OpenAI', type: 'aiModel', subtype: 'azure-openai', cost: '$0.02/1k tokens', description: 'OpenAI on Azure' },
-        { id: 'azure-blob', name: 'Azure Blob Storage', type: 'dataSource', subtype: 'azure-blob', cost: '$0.021/GB', description: 'Cloud storage' }
+        { id: 'aws', name: 'AWS', type: 'cloud', subtype: 'aws', provider: 'aws', description: 'Amazon Web Services' },
+        { id: 'gcp', name: 'Google Cloud', type: 'cloud', subtype: 'gcp', provider: 'gcp', description: 'Google Cloud Platform' },
+        { id: 'azure', name: 'Microsoft Azure', type: 'cloud', subtype: 'azure', provider: 'azure', description: 'Microsoft Azure Cloud' },
+        { id: 'oracle', name: 'Oracle Cloud', type: 'cloud', subtype: 'oracle', provider: 'oracle', description: 'Oracle Cloud Infrastructure' }
       ]
     },
     {
-      id: 'ai-models',
-      name: '🤖 AI Models',
+      id: 'ai-providers',
+      name: '🤖 AI Providers',
       icon: <Bot className="h-4 w-4" />,
       expanded: false,
       items: [
-        { id: 'gpt-4', name: 'GPT-4', type: 'aiModel', subtype: 'gpt4', cost: '$0.03/1k tokens', description: 'OpenAI\'s most capable model' },
-        { id: 'gpt-3.5', name: 'GPT-3.5 Turbo', type: 'aiModel', subtype: 'gpt3.5', cost: '$0.001/1k tokens', description: 'Fast and efficient' },
-        { id: 'whisper', name: 'Whisper', type: 'aiModel', subtype: 'whisper', cost: '$0.006/minute', description: 'Speech recognition' },
-        { id: 'claude-opus', name: 'Claude 3 Opus', type: 'aiModel', subtype: 'claude-opus', cost: '$0.015/1k tokens', description: 'Anthropic\'s most capable' },
-        { id: 'claude-sonnet', name: 'Claude 3 Sonnet', type: 'aiModel', subtype: 'claude-sonnet', cost: '$0.003/1k tokens', description: 'Balanced performance' },
-        { id: 'claude-haiku', name: 'Claude 3 Haiku', type: 'aiModel', subtype: 'claude-haiku', cost: '$0.00025/1k tokens', description: 'Fast and affordable' },
-        { id: 'mixtral', name: 'Mixtral 8x7B', type: 'aiModel', subtype: 'mixtral', cost: '$0.0007/1k tokens', description: 'Mistral\'s mixture model' },
-        { id: 'llama2', name: 'Llama 2 70B', type: 'aiModel', subtype: 'llama2', cost: '$0.0008/1k tokens', description: 'Meta\'s open model' }
+        { id: 'openai', name: 'OpenAI', type: 'aiModel', subtype: 'openai', provider: 'openai', description: 'OpenAI language models' },
+        { id: 'anthropic', name: 'Anthropic', type: 'aiModel', subtype: 'anthropic', provider: 'anthropic', description: 'Claude AI models' },
+        { id: 'mistral', name: 'Mistral AI', type: 'aiModel', subtype: 'mistral', provider: 'mistral', description: 'Mistral language models' },
+        { id: 'google', name: 'Google AI', type: 'aiModel', subtype: 'google', provider: 'google', description: 'Google Gemini models' },
+        { id: 'meta', name: 'Meta', type: 'aiModel', subtype: 'meta', provider: 'meta', description: 'Meta Llama models' }
       ]
     },
     {
@@ -189,7 +185,7 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed }: EnhancedComponentP
                       key={item.id}
                       className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-move hover:bg-gray-100 transition-colors"
                       draggable
-                      onClick={() => onAddNode(item.type, item.subtype, item.name)}
+                      onClick={() => onAddNode(item.type, item.subtype, item.name, item.provider)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
