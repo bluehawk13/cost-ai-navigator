@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +7,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Bot, Brain, Cpu } from 'lucide-react';
 
-const AIModelNode = ({ data }: { data: any }) => {
+const AIModelNode = ({ data, id }: { data: any; id: string }) => {
   const [selectedModel, setSelectedModel] = useState(data.config?.model || '');
   const [maxTokens, setMaxTokens] = useState(data.config?.maxTokens || 2000);
+
+  // Update node data when configuration changes
+  useEffect(() => {
+    if (data.onConfigChange) {
+      data.onConfigChange(id, {
+        ...data.config,
+        model: selectedModel,
+        maxTokens: maxTokens
+      });
+    }
+  }, [selectedModel, maxTokens, id, data]);
 
   const getIcon = () => {
     switch (data.provider) {

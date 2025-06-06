@@ -28,6 +28,7 @@ interface WorkflowActionsPanelProps {
   currentWorkflowId?: string;
   onSaveWorkflow: (name: string, description: string) => void;
   isCollapsed: boolean;
+  onToggle: () => void;
   costEstimationTriggered: boolean;
 }
 
@@ -37,6 +38,7 @@ const WorkflowActionsPanel = ({
   currentWorkflowId, 
   onSaveWorkflow,
   isCollapsed,
+  onToggle,
   costEstimationTriggered
 }: WorkflowActionsPanelProps) => {
   const [workflowName, setWorkflowName] = useState('Untitled Workflow');
@@ -76,16 +78,31 @@ const WorkflowActionsPanel = ({
 
   if (isCollapsed) {
     return (
-      <div className="w-12 bg-white border-l border-gray-200 flex flex-col items-center py-4 space-y-4">
-        <Save className="h-5 w-5 text-gray-600" />
-        <DollarSign className="h-5 w-5 text-gray-600" />
-        <Settings className="h-5 w-5 text-gray-600" />
+      <div className="w-12 bg-white border-l border-gray-200 flex flex-col">
+        <div className="p-2 border-b border-gray-200 flex justify-center">
+          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex flex-col items-center py-4 space-y-4">
+          <Save className="h-5 w-5 text-gray-600" />
+          <DollarSign className="h-5 w-5 text-gray-600" />
+          <Settings className="h-5 w-5 text-gray-600" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-y-auto">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900">Actions Panel</h2>
+        <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Workflow Metadata */}
       <Card className="m-4 mb-2">
         <CardHeader className="pb-3">

@@ -15,7 +15,8 @@ import {
   FileText,
   Cog,
   Send,
-  DollarSign
+  DollarSign,
+  ChevronLeft
 } from 'lucide-react';
 
 interface ComponentItem {
@@ -40,9 +41,10 @@ interface ComponentCategory {
 interface EnhancedComponentPaletteProps {
   onAddNode: (nodeType: string, subtype: string, label: string, provider?: string) => void;
   isCollapsed: boolean;
+  onToggle: () => void;
 }
 
-const EnhancedComponentPalette = ({ onAddNode, isCollapsed }: EnhancedComponentPaletteProps) => {
+const EnhancedComponentPalette = ({ onAddNode, isCollapsed, onToggle }: EnhancedComponentPaletteProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categories, setCategories] = useState<ComponentCategory[]>([
     {
@@ -132,13 +134,20 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed }: EnhancedComponentP
 
   if (isCollapsed) {
     return (
-      <div className="w-12 bg-gray-50 border-r border-gray-200 flex flex-col items-center py-4 space-y-4">
-        <Cloud className="h-5 w-5 text-gray-600" />
-        <Bot className="h-5 w-5 text-gray-600" />
-        <FileText className="h-5 w-5 text-gray-600" />
-        <Database className="h-5 w-5 text-gray-600" />
-        <Cog className="h-5 w-5 text-gray-600" />
-        <Send className="h-5 w-5 text-gray-600" />
+      <div className="w-12 bg-gray-50 border-r border-gray-200 flex flex-col">
+        <div className="p-2 border-b border-gray-200 flex justify-center">
+          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex flex-col items-center py-4 space-y-4">
+          <Cloud className="h-5 w-5 text-gray-600" />
+          <Bot className="h-5 w-5 text-gray-600" />
+          <FileText className="h-5 w-5 text-gray-600" />
+          <Database className="h-5 w-5 text-gray-600" />
+          <Cog className="h-5 w-5 text-gray-600" />
+          <Send className="h-5 w-5 text-gray-600" />
+        </div>
       </div>
     );
   }
@@ -147,7 +156,12 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed }: EnhancedComponentP
     <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Component Palette</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-900">Component Palette</h2>
+          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input

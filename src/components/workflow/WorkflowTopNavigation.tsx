@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,10 +16,9 @@ import {
   Download, 
   Calculator,
   Upload,
-  PanelLeftClose,
-  PanelRightClose,
-  ChevronLeft,
-  ChevronRight
+  ZoomIn,
+  ZoomOut,
+  FitScreen
 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Node, Edge } from '@xyflow/react';
@@ -32,11 +30,11 @@ interface WorkflowTopNavigationProps {
   onSaveWorkflow: () => void;
   onExportJSON: () => void;
   onExportPDF: () => void;
-  onToggleLeftSidebar: () => void;
-  onToggleRightSidebar: () => void;
   onRunCostEstimation: () => void;
-  leftSidebarOpen: boolean;
-  rightSidebarOpen: boolean;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onFitView: () => void;
+  onLoadWorkflow: (workflowData: any) => void;
 }
 
 const WorkflowTopNavigation = ({
@@ -46,11 +44,11 @@ const WorkflowTopNavigation = ({
   onSaveWorkflow,
   onExportJSON,
   onExportPDF,
-  onToggleLeftSidebar,
-  onToggleRightSidebar,
   onRunCostEstimation,
-  leftSidebarOpen,
-  rightSidebarOpen
+  onZoomIn,
+  onZoomOut,
+  onFitView,
+  onLoadWorkflow
 }: WorkflowTopNavigationProps) => {
   const [templates] = useState([
     { 
@@ -58,10 +56,15 @@ const WorkflowTopNavigation = ({
       name: 'HR Automation Pipeline', 
       description: 'Resume screening, candidate matching, and interview scheduling',
       nodes: [
-        { id: 'resume-parser', type: 'dataSource', subtype: 'file', label: 'Resume Parser' },
-        { id: 'skill-extractor', type: 'aiModel', subtype: 'gpt4', label: 'Skill Extractor' },
-        { id: 'candidate-db', type: 'database', subtype: 'postgres', label: 'Candidate Database' },
-        { id: 'email-notify', type: 'output', subtype: 'email', label: 'Email Notification' }
+        { id: 'resume-parser', type: 'dataSource', subtype: 'file', label: 'Resume Parser', position: { x: 100, y: 100 } },
+        { id: 'skill-extractor', type: 'aiModel', subtype: 'openai', label: 'Skill Extractor', provider: 'openai', config: { model: 'gpt-4', maxTokens: 2000 }, position: { x: 300, y: 100 } },
+        { id: 'candidate-db', type: 'database', subtype: 'postgres', label: 'Candidate Database', position: { x: 500, y: 100 } },
+        { id: 'email-notify', type: 'output', subtype: 'email', label: 'Email Notification', position: { x: 700, y: 100 } }
+      ],
+      edges: [
+        { id: 'e1', source: 'resume-parser', target: 'skill-extractor' },
+        { id: 'e2', source: 'skill-extractor', target: 'candidate-db' },
+        { id: 'e3', source: 'candidate-db', target: 'email-notify' }
       ]
     },
     { 
@@ -69,11 +72,17 @@ const WorkflowTopNavigation = ({
       name: 'Finance Analysis Workflow', 
       description: 'Invoice processing, expense categorization, and financial reporting',
       nodes: [
-        { id: 'invoice-upload', type: 'dataSource', subtype: 'file', label: 'Invoice Upload' },
-        { id: 'ocr-processor', type: 'aiModel', subtype: 'gpt4', label: 'OCR Processor' },
-        { id: 'expense-categorizer', type: 'logic', subtype: 'filter', label: 'Expense Categorizer' },
-        { id: 'financial-db', type: 'database', subtype: 'postgres', label: 'Financial Database' },
-        { id: 'report-generator', type: 'output', subtype: 'pdf', label: 'Report Generator' }
+        { id: 'invoice-upload', type: 'dataSource', subtype: 'file', label: 'Invoice Upload', position: { x: 100, y: 100 } },
+        { id: 'ocr-processor', type: 'aiModel', subtype: 'openai', label: 'OCR Processor', provider: 'openai', config: { model: 'gpt-4', maxTokens: 1500 }, position: { x: 300, y: 100 } },
+        { id: 'expense-categorizer', type: 'logic', subtype: 'filter', label: 'Expense Categorizer', position: { x: 500, y: 100 } },
+        { id: 'financial-db', type: 'database', subtype: 'postgres', label: 'Financial Database', position: { x: 700, y: 100 } },
+        { id: 'report-generator', type: 'output', subtype: 'pdf', label: 'Report Generator', position: { x: 900, y: 100 } }
+      ],
+      edges: [
+        { id: 'e1', source: 'invoice-upload', target: 'ocr-processor' },
+        { id: 'e2', source: 'ocr-processor', target: 'expense-categorizer' },
+        { id: 'e3', source: 'expense-categorizer', target: 'financial-db' },
+        { id: 'e4', source: 'financial-db', target: 'report-generator' }
       ]
     },
     { 
@@ -81,35 +90,23 @@ const WorkflowTopNavigation = ({
       name: 'Marketing Content Pipeline', 
       description: 'Content generation, social media automation, and performance tracking',
       nodes: [
-        { id: 'content-brief', type: 'dataSource', subtype: 'api', label: 'Content Brief API' },
-        { id: 'content-generator', type: 'aiModel', subtype: 'gpt4', label: 'Content Generator' },
-        { id: 'image-generator', type: 'aiModel', subtype: 'dall-e', label: 'Image Generator' },
-        { id: 'social-scheduler', type: 'output', subtype: 'webhook', label: 'Social Scheduler' }
-      ]
-    },
-    { 
-      id: 'customer-support', 
-      name: 'Customer Support Automation', 
-      description: 'Ticket classification, automated responses, and escalation management',
-      nodes: [
-        { id: 'ticket-intake', type: 'dataSource', subtype: 'api', label: 'Ticket Intake' },
-        { id: 'sentiment-analyzer', type: 'aiModel', subtype: 'claude', label: 'Sentiment Analyzer' },
-        { id: 'response-generator', type: 'aiModel', subtype: 'gpt3.5', label: 'Response Generator' },
-        { id: 'escalation-logic', type: 'logic', subtype: 'branch', label: 'Escalation Logic' },
-        { id: 'ticket-db', type: 'database', subtype: 'postgres', label: 'Ticket Database' }
-      ]
-    },
-    { 
-      id: 'data-processing', 
-      name: 'Data Processing Pipeline', 
-      description: 'ETL operations, data validation, and analytics preparation',
-      nodes: [
-        { id: 'data-source', type: 'dataSource', subtype: 'api', label: 'Data Source' },
-        { id: 'data-validator', type: 'logic', subtype: 'validate', label: 'Data Validator' },
-        { id: 'data-transformer', type: 'logic', subtype: 'transform', label: 'Data Transformer' },
-        { id: 'analytics-db', type: 'database', subtype: 'pinecone', label: 'Analytics Database' }
+        { id: 'content-brief', type: 'dataSource', subtype: 'api', label: 'Content Brief API', position: { x: 100, y: 100 } },
+        { id: 'content-generator', type: 'aiModel', subtype: 'openai', label: 'Content Generator', provider: 'openai', config: { model: 'gpt-4', maxTokens: 3000 }, position: { x: 300, y: 100 } },
+        { id: 'image-generator', type: 'aiModel', subtype: 'openai', label: 'Image Generator', provider: 'openai', config: { model: 'dall-e-3', maxTokens: 1000 }, position: { x: 500, y: 100 } },
+        { id: 'social-scheduler', type: 'output', subtype: 'webhook', label: 'Social Scheduler', position: { x: 700, y: 100 } }
+      ],
+      edges: [
+        { id: 'e1', source: 'content-brief', target: 'content-generator' },
+        { id: 'e2', source: 'content-generator', target: 'image-generator' },
+        { id: 'e3', source: 'image-generator', target: 'social-scheduler' }
       ]
     }
+  ]);
+
+  const [savedWorkflows] = useState([
+    { id: '1', name: 'Customer Support Bot', createdAt: '2024-01-15', description: 'AI-powered customer support automation' },
+    { id: '2', name: 'Data Processing Pipeline', createdAt: '2024-01-10', description: 'ETL workflow with validation' },
+    { id: '3', name: 'Email Campaign Generator', createdAt: '2024-01-05', description: 'Automated email content creation' }
   ]);
 
   const handleNewWorkflow = () => {
@@ -135,6 +132,7 @@ const WorkflowTopNavigation = ({
         reader.onload = (e) => {
           try {
             const workflow = JSON.parse(e.target?.result as string);
+            onLoadWorkflow(workflow);
             toast({
               title: "Workflow Imported",
               description: `Imported workflow: ${workflow.metadata?.name || 'Unnamed'}`,
@@ -156,11 +154,28 @@ const WorkflowTopNavigation = ({
   const handleLoadTemplate = (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
     if (template) {
-      // Here you would actually load the template nodes and edges
-      // For now, just show a toast
+      onLoadWorkflow({
+        nodes: template.nodes,
+        edges: template.edges,
+        metadata: {
+          name: template.name,
+          description: template.description
+        }
+      });
       toast({
         title: "Template Loaded",
         description: `Loaded ${template.name} template`,
+      });
+    }
+  };
+
+  const handleLoadSavedWorkflow = (workflowId: string) => {
+    const workflow = savedWorkflows.find(w => w.id === workflowId);
+    if (workflow) {
+      // In a real app, you would fetch the actual workflow data here
+      toast({
+        title: "Workflow Loaded",
+        description: `Loaded ${workflow.name}`,
       });
     }
   };
@@ -311,7 +326,7 @@ output "workflow_info" {
 
   return (
     <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
-      {/* Left Section - Logo, Main Menu, and Sidebar Controls */}
+      {/* Left Section - Logo and Main Menu */}
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
@@ -319,26 +334,6 @@ output "workflow_info" {
           </div>
           <span className="text-lg font-semibold text-gray-900">Workflow Builder</span>
           <Badge variant="secondary" className="text-xs">Beta</Badge>
-        </div>
-
-        {/* Sidebar Toggle Buttons */}
-        <div className="flex items-center space-x-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleLeftSidebar}
-            className="h-8 w-8 p-0"
-          >
-            {leftSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleRightSidebar}
-            className="h-8 w-8 p-0"
-          >
-            {rightSidebarOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
         </div>
 
         <Menubar className="border-none bg-transparent">
@@ -361,6 +356,18 @@ output "workflow_info" {
               <MenubarItem onClick={handleImportJSON}>
                 Import JSON
               </MenubarItem>
+              <MenubarSeparator />
+              {savedWorkflows.map((workflow) => (
+                <MenubarItem 
+                  key={workflow.id}
+                  onClick={() => handleLoadSavedWorkflow(workflow.id)}
+                >
+                  <div>
+                    <div className="font-medium">{workflow.name}</div>
+                    <div className="text-xs text-gray-500">{workflow.description}</div>
+                  </div>
+                </MenubarItem>
+              ))}
             </MenubarContent>
           </MenubarMenu>
 
@@ -386,23 +393,6 @@ output "workflow_info" {
             </MenubarContent>
           </MenubarMenu>
 
-          {/* Estimate Menu */}
-          <MenubarMenu>
-            <MenubarTrigger className="text-sm">Estimate</MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem onClick={onRunCostEstimation}>
-                <Calculator className="h-4 w-4 mr-2" />
-                Run Cost Simulation
-              </MenubarItem>
-              <MenubarItem>
-                Compare Providers
-              </MenubarItem>
-              <MenubarItem>
-                Optimization Tips
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-
           {/* Export Menu */}
           <MenubarMenu>
             <MenubarTrigger className="text-sm">Export</MenubarTrigger>
@@ -424,6 +414,15 @@ output "workflow_info" {
 
       {/* Right Section - Quick Actions */}
       <div className="flex items-center space-x-2">
+        <Button variant="outline" size="sm" onClick={onZoomOut}>
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={onZoomIn}>
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={onFitView}>
+          <FitScreen className="h-4 w-4" />
+        </Button>
         <Button variant="outline" size="sm" onClick={onRunCostEstimation}>
           <Calculator className="h-4 w-4 mr-1" />
           Estimate

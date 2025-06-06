@@ -21,7 +21,7 @@ export interface WorkflowData {
 }
 
 export interface CostEstimationRequest {
-  workflow: WorkflowData;
+  workflow_description: string;
   estimationType: 'monthly' | 'per_request' | 'hourly';
   expectedVolume?: {
     requests_per_month?: number;
@@ -70,25 +70,85 @@ export interface CostEstimationResponse {
   timestamp: string;
 }
 
-export const transformWorkflowForEstimation = (nodes: Node[], edges: Edge[]): WorkflowData => {
-  return {
-    nodes: nodes.map(node => ({
-      id: node.id,
-      type: node.type || 'unknown',
-      subtype: typeof node.data?.subtype === 'string' ? node.data.subtype : undefined,
-      provider: typeof node.data?.provider === 'string' ? node.data.provider : undefined,
-      label: typeof node.data?.label === 'string' ? node.data.label : node.id,
-      config: node.data?.config || {},
-      position: node.position
-    })),
-    edges: edges.map(edge => ({
-      id: edge.id,
-      source: edge.source,
-      target: edge.target,
-      sourceHandle: edge.sourceHandle,
-      targetHandle: edge.targetHandle
-    }))
-  };
+export const createWorkflowDescription = (nodes: Node[]): string => {
+  if (nodes.length === 0) {
+    return "Empty workflow with no components.";
+  }
+
+  let description = "AI Workflow Pipeline containing: ";
+  const components: string[] = [];
+
+  nodes.forEach(node => {
+    const nodeType = node.type || 'unknown';
+    const provider = typeof node.data?.provider === 'string' ? node.data.provider : undefined;
+    const subtype = typeof node.data?.subtype === 'string' ? node.data.subtype : undefined;
+    const label = typeof node.data?.label === 'string' ? node.data.label : node.id;
+    const config = node.data?.config || {};
+
+    switch (nodeType) {
+      case 'cloud':
+        if (provider && config.service) {
+          components.push(`${provider.toUpperCase()} cloud service (${config.service})`);
+        } else if (provider) {
+          components.push(`${provider.toUpperCase()} cloud provider`);
+        } else {
+          components.push('Cloud provider service');
+        }
+        break;
+
+      case 'aiModel':
+        if (provider && config.model && config.maxTokens) {
+          components.push(`${provider} AI model with ${config.model} and ${config.maxTokens} max tokens`);
+        } else if (provider && config.model) {
+          components.push(`${provider} AI model with ${config.model}`);
+        } else if (provider) {
+          components.push(`${provider} AI model`);
+        } else {
+          components.push('AI language model');
+        }
+        break;
+
+      case 'dataSource':
+        if (subtype) {
+          components.push(`${subtype} data source`);
+        } else {
+          components.push('Data source component');
+        }
+        break;
+
+      case 'database':
+        if (subtype) {
+          components.push(`${subtype} database`);
+        } else {
+          components.push('Database component');
+        }
+        break;
+
+      case 'logic':
+        if (subtype) {
+          components.push(`${subtype} logic component`);
+        } else {
+          components.push('Logic processing component');
+        }
+        break;
+
+      case 'output':
+        if (subtype) {
+          components.push(`${subtype} output target`);
+        } else {
+          components.push('Output component');
+        }
+        break;
+
+      default:
+        components.push(`${label} component`);
+    }
+  });
+
+  description += components.join(", ");
+  description += `. Total components: ${nodes.length}. Please estimate the monthly costs for this workflow.`;
+
+  return description;
 };
 
 export const estimateWorkflowCost = async (
@@ -103,10 +163,10 @@ export const estimateWorkflowCost = async (
     };
   } = {}
 ): Promise<CostEstimationResponse> => {
-  const workflow = transformWorkflowForEstimation(nodes, edges);
+  const workflowDescription = createWorkflowDescription(nodes);
   
   const requestData: CostEstimationRequest = {
-    workflow,
+    workflow_description: workflowDescription,
     estimationType: options.estimationType || 'monthly',
     expectedVolume: options.expectedVolume || {
       requests_per_month: 10000,
@@ -116,6 +176,8 @@ export const estimateWorkflowCost = async (
   };
 
   try {
+    console.log('Sending cost estimation request:', requestData);
+    
     // Replace with actual lyzr.ai endpoint
     const response = await fetch('https://api.lyzr.ai/v1/cost-estimation', {
       method: 'POST',
@@ -135,6 +197,7 @@ export const estimateWorkflowCost = async (
     return costData;
   } catch (error) {
     console.error('Cost estimation API error:', error);
+    console.log('Using mock data for development');
     
     // Return mock data for development/testing
     return generateMockCostEstimation(nodes, edges);
@@ -146,14 +209,21 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
   const nodeBreakdown: NodeCostBreakdown[] = nodes.map(node => {
     const baseCost = Math.random() * 50 + 5;
     const nodeType = node.type || 'unknown';
+    const provider = typeof node.data?.provider === 'string' ? node.data.provider : undefined;
+    const subtype = typeof node.data?.subtype === 'string' ? node.data.subtype : undefined;
+    const config = node.data?.config || {};
     
     let cost = baseCost;
     let costUnit = 'USD/month';
     
-    // Adjust cost based on node type
+    // Adjust cost based on node type and configuration
     switch (nodeType) {
       case 'aiModel':
-        cost = Math.random() * 100 + 20;
+        if (config.maxTokens) {
+          cost = (config.maxTokens / 1000) * 0.002; // Simple token-based pricing
+        } else {
+          cost = Math.random() * 100 + 20;
+        }
         break;
       case 'cloud':
         cost = Math.random() * 30 + 10;
@@ -173,8 +243,8 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
       nodeId: node.id,
       nodeName: typeof node.data?.label === 'string' ? node.data.label : node.id,
       nodeType,
-      provider: typeof node.data?.provider === 'string' ? node.data.provider : undefined,
-      service: typeof node.data?.subtype === 'string' ? node.data.subtype : undefined,
+      provider,
+      service: subtype,
       estimatedCost: parseFloat(cost.toFixed(2)),
       costUnit,
       breakdown: {

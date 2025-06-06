@@ -1,13 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Cloud, Server, Database, Cpu } from 'lucide-react';
 
-const CloudProviderNode = ({ data }: { data: any }) => {
+const CloudProviderNode = ({ data, id }: { data: any; id: string }) => {
   const [selectedService, setSelectedService] = useState(data.config?.service || '');
+
+  // Update node data when configuration changes
+  useEffect(() => {
+    if (data.onConfigChange) {
+      data.onConfigChange(id, {
+        ...data.config,
+        service: selectedService
+      });
+    }
+  }, [selectedService, id, data]);
 
   const getIcon = () => {
     switch (data.provider) {

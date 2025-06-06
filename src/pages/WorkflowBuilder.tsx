@@ -68,7 +68,8 @@ const WorkflowBuilderInner = () => {
         label,
         subtype,
         provider,
-        config: getDefaultConfig(nodeType, subtype, provider)
+        config: getDefaultConfig(nodeType, subtype, provider),
+        onConfigChange: handleNodeConfigChange
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -130,6 +131,23 @@ const WorkflowBuilderInner = () => {
     return configs[nodeType]?.[subtype] || {};
   };
 
+  const handleNodeConfigChange = useCallback((nodeId: string, newConfig: any) => {
+    setNodes(nds =>
+      nds.map(node => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              config: newConfig
+            }
+          };
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
+
   const handleNewWorkflow = useCallback(() => {
     setNodes([]);
     setEdges([]);
@@ -153,6 +171,22 @@ const WorkflowBuilderInner = () => {
       console.error('Error saving workflow:', error);
     }
   }, [saveWorkflow, nodes, edges, currentWorkflowId]);
+
+  const handleLoadWorkflow = useCallback((workflowData: any) => {
+    if (workflowData.nodes) {
+      setNodes(workflowData.nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          onConfigChange: handleNodeConfigChange
+        }
+      })));
+    }
+    if (workflowData.edges) {
+      setEdges(workflowData.edges);
+    }
+    setCostEstimationTriggered(false);
+  }, [setNodes, setEdges, handleNodeConfigChange]);
 
   const handleRunCostEstimation = useCallback(() => {
     setCostEstimationTriggered(true);
@@ -227,11 +261,11 @@ const WorkflowBuilderInner = () => {
         onSaveWorkflow={() => handleSaveWorkflow('Untitled Workflow', '')}
         onExportJSON={handleExportJSON}
         onExportPDF={handleExportPDF}
-        onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
-        onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
         onRunCostEstimation={handleRunCostEstimation}
-        leftSidebarOpen={leftSidebarOpen}
-        rightSidebarOpen={rightSidebarOpen}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        onFitView={fitView}
+        onLoadWorkflow={handleLoadWorkflow}
       />
 
       {/* Main Content Area */}
@@ -240,6 +274,7 @@ const WorkflowBuilderInner = () => {
         <EnhancedComponentPalette
           onAddNode={addNode}
           isCollapsed={!leftSidebarOpen}
+          onToggle={() => setLeftSidebarOpen(!leftSidebarOpen)}
         />
 
         {/* Main Canvas */}
@@ -281,6 +316,7 @@ const WorkflowBuilderInner = () => {
           currentWorkflowId={currentWorkflowId}
           onSaveWorkflow={handleSaveWorkflow}
           isCollapsed={!rightSidebarOpen}
+          onToggle={() => setRightSidebarOpen(!rightSidebarOpen)}
           costEstimationTriggered={costEstimationTriggered}
         />
       </div>
