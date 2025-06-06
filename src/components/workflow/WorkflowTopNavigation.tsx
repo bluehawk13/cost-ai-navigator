@@ -18,7 +18,7 @@ import {
   Upload,
   ZoomIn,
   ZoomOut,
-  FitScreen
+  Maximize2
 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Node, Edge } from '@xyflow/react';
@@ -421,7 +421,7 @@ output "workflow_info" {
           <ZoomIn className="h-4 w-4" />
         </Button>
         <Button variant="outline" size="sm" onClick={onFitView}>
-          <FitScreen className="h-4 w-4" />
+          <Maximize2 className="h-4 w-4" />
         </Button>
         <Button variant="outline" size="sm" onClick={onRunCostEstimation}>
           <Calculator className="h-4 w-4 mr-1" />

@@ -15,7 +15,8 @@ import {
   Settings,
   Calculator,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, Tooltip, Pie } from 'recharts';

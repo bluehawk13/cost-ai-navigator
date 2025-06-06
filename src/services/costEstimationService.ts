@@ -87,7 +87,7 @@ export const createWorkflowDescription = (nodes: Node[]): string => {
 
     switch (nodeType) {
       case 'cloud':
-        if (provider && config.service) {
+        if (provider && config?.service) {
           components.push(`${provider.toUpperCase()} cloud service (${config.service})`);
         } else if (provider) {
           components.push(`${provider.toUpperCase()} cloud provider`);
@@ -97,9 +97,9 @@ export const createWorkflowDescription = (nodes: Node[]): string => {
         break;
 
       case 'aiModel':
-        if (provider && config.model && config.maxTokens) {
+        if (provider && config?.model && config?.maxTokens) {
           components.push(`${provider} AI model with ${config.model} and ${config.maxTokens} max tokens`);
-        } else if (provider && config.model) {
+        } else if (provider && config?.model) {
           components.push(`${provider} AI model with ${config.model}`);
         } else if (provider) {
           components.push(`${provider} AI model`);
@@ -219,7 +219,7 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
     // Adjust cost based on node type and configuration
     switch (nodeType) {
       case 'aiModel':
-        if (config.maxTokens) {
+        if (config?.maxTokens) {
           cost = (config.maxTokens / 1000) * 0.002; // Simple token-based pricing
         } else {
           cost = Math.random() * 100 + 20;
