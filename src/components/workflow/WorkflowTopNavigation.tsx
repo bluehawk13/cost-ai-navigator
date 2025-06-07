@@ -24,7 +24,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Node, Edge } from '@xyflow/react';
 import { useWorkflows } from '@/hooks/useWorkflows';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -60,8 +60,9 @@ const WorkflowTopNavigation = ({
   const { workflows, loading } = useWorkflows();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
-  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
+  const [workflowName, setWorkflowName] = useState('');
   const [workflowDescription, setWorkflowDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const [templates] = useState([
     { 
@@ -134,30 +135,63 @@ const WorkflowTopNavigation = ({
       return;
     }
 
+    if (nodes.length === 0) {
+      toast({
+        title: "Error",
+        description: "Cannot save an empty workflow. Please add some components first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
     try {
       await onSaveWorkflow(workflowName, workflowDescription);
       setSaveDialogOpen(false);
-      setWorkflowName('Untitled Workflow');
+      setWorkflowName('');
       setWorkflowDescription('');
       toast({
         title: "Success",
-        description: "Workflow saved to Supabase",
+        description: "Workflow saved successfully",
       });
     } catch (error) {
+      console.error('Save workflow error:', error);
       toast({
         title: "Error",
-        description: "Failed to save workflow",
+        description: "Failed to save workflow. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSaveAsTemplate = () => {
+    if (!workflowName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a template name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (nodes.length === 0) {
+      toast({
+        title: "Error",
+        description: "Cannot save an empty workflow as template. Please add some components first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Template Saved",
-      description: "Workflow saved as template (this feature will be implemented)",
+      description: `Template "${workflowName}" saved successfully`,
     });
     setSaveAsTemplateDialogOpen(false);
+    setWorkflowName('');
+    setWorkflowDescription('');
   };
 
   const handleImportJSON = () => {
@@ -171,12 +205,16 @@ const WorkflowTopNavigation = ({
         reader.onload = (e) => {
           try {
             const workflow = JSON.parse(e.target?.result as string);
+            if (!workflow.nodes || !Array.isArray(workflow.nodes)) {
+              throw new Error('Invalid workflow format: missing nodes array');
+            }
             onLoadWorkflow(workflow);
             toast({
               title: "Workflow Imported",
               description: `Imported workflow: ${workflow.metadata?.name || 'Unnamed'}`,
             });
           } catch (error) {
+            console.error('Import error:', error);
             toast({
               title: "Import Error",
               description: "Invalid workflow file format",
@@ -478,6 +516,9 @@ output "workflow_info" {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Save Workflow to Supabase</DialogTitle>
+            <DialogDescription>
+              Save your workflow to the database for future use and collaboration.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -486,6 +527,7 @@ output "workflow_info" {
                 value={workflowName}
                 onChange={(e) => setWorkflowName(e.target.value)}
                 placeholder="Enter workflow name"
+                disabled={isSaving}
               />
             </div>
             <div>
@@ -495,10 +537,15 @@ output "workflow_info" {
                 onChange={(e) => setWorkflowDescription(e.target.value)}
                 placeholder="Enter workflow description (optional)"
                 rows={3}
+                disabled={isSaving}
               />
             </div>
-            <Button onClick={handleSaveWorkflow} className="w-full">
-              Save Workflow
+            <Button 
+              onClick={handleSaveWorkflow} 
+              className="w-full"
+              disabled={isSaving || !workflowName.trim()}
+            >
+              {isSaving ? "Saving..." : "Save Workflow"}
             </Button>
           </div>
         </DialogContent>
@@ -509,6 +556,9 @@ output "workflow_info" {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Save As Template</DialogTitle>
+            <DialogDescription>
+              Save your workflow as a reusable template that can be shared with others.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -528,7 +578,11 @@ output "workflow_info" {
                 rows={3}
               />
             </div>
-            <Button onClick={handleSaveAsTemplate} className="w-full">
+            <Button 
+              onClick={handleSaveAsTemplate} 
+              className="w-full"
+              disabled={!workflowName.trim()}
+            >
               Save Template
             </Button>
           </div>

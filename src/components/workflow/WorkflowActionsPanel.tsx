@@ -1,10 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
 import { 
   DollarSign, 
   TrendingDown,
@@ -14,15 +12,12 @@ import {
   Calculator,
   ChevronDown,
   ChevronRight,
-  ChevronLeft,
-  Edit2,
-  Save
+  ChevronLeft
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, Tooltip, Pie } from 'recharts';
 import { estimateWorkflowCost, CostEstimationResponse, NodeCostBreakdown } from '@/services/costEstimationService';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { toast } from "@/hooks/use-toast";
 
 interface WorkflowActionsPanelProps {
   nodes: Node[];
@@ -31,7 +26,6 @@ interface WorkflowActionsPanelProps {
   isCollapsed: boolean;
   onToggle: () => void;
   costEstimationCounter: number;
-  onSaveWorkflow?: (name: string, description: string) => void;
 }
 
 const WorkflowActionsPanel = ({ 
@@ -40,15 +34,11 @@ const WorkflowActionsPanel = ({
   currentWorkflowId, 
   isCollapsed,
   onToggle,
-  costEstimationCounter,
-  onSaveWorkflow
+  costEstimationCounter
 }: WorkflowActionsPanelProps) => {
   const [costEstimation, setCostEstimation] = useState<CostEstimationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showNodeBreakdown, setShowNodeBreakdown] = useState(false);
-  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
-  const [workflowDescription, setWorkflowDescription] = useState('');
-  const [isEditingName, setIsEditingName] = useState(false);
   const [lastEstimationCounter, setLastEstimationCounter] = useState(0);
 
   // Calculate cost estimation only when counter changes (button clicked) and only once per click
@@ -83,53 +73,6 @@ const WorkflowActionsPanel = ({
     ].filter(item => item.value > 0);
   }, [costEstimation]);
 
-  const handleSaveWorkflow = async () => {
-    if (!workflowName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a workflow name",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (onSaveWorkflow) {
-      try {
-        await onSaveWorkflow(workflowName, workflowDescription);
-        toast({
-          title: "Success",
-          description: "Workflow saved successfully",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to save workflow",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleNameEdit = () => {
-    setIsEditingName(true);
-  };
-
-  const handleNameSave = () => {
-    setIsEditingName(false);
-    if (workflowName.trim()) {
-      toast({
-        title: "Workflow Name Updated",
-        description: `Name changed to "${workflowName}"`,
-      });
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleNameSave();
-    }
-  };
-
   if (isCollapsed) {
     return (
       <div className="w-12 bg-white border-l border-gray-200 flex flex-col">
@@ -155,57 +98,6 @@ const WorkflowActionsPanel = ({
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-
-      {/* Workflow Name Section */}
-      <Card className="m-4 mb-2">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Edit2 className="h-4 w-4" />
-            Workflow Name
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            {isEditingName ? (
-              <div className="flex-1 flex gap-2">
-                <Input
-                  value={workflowName}
-                  onChange={(e) => setWorkflowName(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  onBlur={handleNameSave}
-                  className="text-sm"
-                  autoFocus
-                />
-                <Button size="sm" onClick={handleNameSave}>
-                  <Save className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-between">
-                <span className="text-sm font-medium truncate">{workflowName}</span>
-                <Button variant="ghost" size="sm" onClick={handleNameEdit} className="h-6 w-6 p-0">
-                  <Edit2 className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Description</label>
-            <Input
-              value={workflowDescription}
-              onChange={(e) => setWorkflowDescription(e.target.value)}
-              placeholder="Add workflow description..."
-              className="text-sm"
-            />
-          </div>
-          {onSaveWorkflow && (
-            <Button onClick={handleSaveWorkflow} size="sm" className="w-full">
-              <Save className="h-4 w-4 mr-1" />
-              Save Workflow
-            </Button>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Cost Estimator */}
       <Card className="m-4 mb-2">

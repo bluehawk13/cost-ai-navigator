@@ -153,9 +153,31 @@ const WorkflowBuilderInner = () => {
     setEdges([]);
     setCurrentWorkflowId(undefined);
     setCostEstimationCounter(0);
+    toast({
+      title: "New Workflow",
+      description: "Started a new workflow canvas",
+    });
   }, [setNodes, setEdges]);
 
   const handleSaveWorkflow = useCallback(async (name: string, description: string) => {
+    if (!name.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a workflow name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (nodes.length === 0) {
+      toast({
+        title: "Error", 
+        description: "Cannot save an empty workflow. Please add some components first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const workflowId = await saveWorkflow({
         name,
@@ -169,6 +191,7 @@ const WorkflowBuilderInner = () => {
       }
     } catch (error) {
       console.error('Error saving workflow:', error);
+      // Error handling is done in the hook
     }
   }, [saveWorkflow, nodes, edges, currentWorkflowId]);
 
@@ -209,10 +232,20 @@ const WorkflowBuilderInner = () => {
     if (workflowData.edges) {
       setEdges(workflowData.edges);
     }
+    setCurrentWorkflowId(undefined);
     setCostEstimationCounter(0);
   }, [setNodes, setEdges, handleNodeConfigChange]);
 
   const handleRunCostEstimation = useCallback(() => {
+    if (nodes.length === 0) {
+      toast({
+        title: "No Components",
+        description: "Please add some workflow components before running cost estimation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log('Cost estimation button clicked, incrementing counter from', costEstimationCounter);
     setCostEstimationCounter(prev => {
       const newValue = prev + 1;
@@ -223,9 +256,18 @@ const WorkflowBuilderInner = () => {
       title: "Cost Estimation",
       description: "Running cost simulation across cloud providers...",
     });
-  }, [costEstimationCounter]);
+  }, [costEstimationCounter, nodes.length]);
 
   const handleExportJSON = useCallback(() => {
+    if (nodes.length === 0) {
+      toast({
+        title: "No Components",
+        description: "Please add some workflow components before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const workflow = {
       nodes: nodes.map(node => ({
         id: node.id,
@@ -347,7 +389,6 @@ const WorkflowBuilderInner = () => {
           isCollapsed={!rightSidebarOpen}
           onToggle={() => setRightSidebarOpen(!rightSidebarOpen)}
           costEstimationCounter={costEstimationCounter}
-          onSaveWorkflow={handleSaveWorkflow}
         />
       </div>
     </div>
