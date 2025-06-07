@@ -77,7 +77,7 @@ const WorkflowActionsPanel = ({
     return (
       <div className="w-12 bg-white border-l border-gray-200 flex flex-col">
         <div className="p-2 border-b border-gray-200 flex justify-center">
-          <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+          <Button variant="ghost\" size="sm\" onClick={onToggle} className="h-8 w-8 p-0">
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
