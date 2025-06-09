@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +110,8 @@ const ChatInterfaceWithSidebar = () => {
     }
     
     try {
+      console.log('Sending message to agent API:', userMessageContent);
+      
       const response = await fetch(import.meta.env.VITE_AGENT_API_URL, {
         method: 'POST',
         headers: {
@@ -122,13 +125,16 @@ const ChatInterfaceWithSidebar = () => {
           message: userMessageContent
         })
       });
-    //    console.log("Responsejson="+response.json());
-       console.log("Response::"+response);
+
+      console.log('API Response status:', response.status);
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data: AgentResponse = await response.json();
+      console.log('Received agent response:', data);
+
       const assistantResponse = data || {
         textView: "I apologize, but I couldn't process your request. Please try again.",
         dashboardView: {
@@ -140,6 +146,7 @@ const ChatInterfaceWithSidebar = () => {
         }
       };
 
+      console.log('Saving assistant response:', assistantResponse);
       await saveMessage(JSON.stringify(assistantResponse), 'assistant');
       
     } catch (error) {
@@ -167,6 +174,7 @@ const ChatInterfaceWithSidebar = () => {
       setIsLoading(false);
     }
   };
+  
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -180,6 +188,7 @@ const ChatInterfaceWithSidebar = () => {
 
   const renderMessageContent = (message: any) => {
     const viewMode = messageViewModes[message.id] || 'text';
+    console.log('Rendering message content for:', message.id, 'viewMode:', viewMode);
   
     try {
       const parsedContent = JSON.parse(message.content) as {
@@ -192,13 +201,17 @@ const ChatInterfaceWithSidebar = () => {
           recommendations?: any[];
         };
       };
+
+      console.log('Parsed message content:', parsedContent);
   
       if (viewMode === 'dashboard' && parsedContent.dashboardView) {
+        console.log('Rendering dashboard view for message:', message.id);
         return <DashboardRenderer content={parsedContent.dashboardView} />;
       }
   
       // Default to textView if available, otherwise fallback to raw content
       const markdownContent = parsedContent.textView || message.content;
+      console.log('Rendering text view for message:', message.id);
   
       return (
         <div className="prose max-w-none text-sm leading-relaxed">
@@ -224,6 +237,7 @@ const ChatInterfaceWithSidebar = () => {
         </div>
       );
     } catch (e) {
+      console.error('Error parsing message content:', e);
       // Fallback for non-JSON messages
       return (
         <div className="text-sm leading-relaxed whitespace-pre-wrap">

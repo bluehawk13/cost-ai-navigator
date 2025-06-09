@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -25,12 +26,13 @@ interface DashboardRendererProps {
         title: string;
         value: React.ReactNode;
         description?: string;
-        status?: 'positive' | 'negative' | 'neutral';
+        status?: 'positive' | 'negative' | 'neutral' | string;
       }>;
       tables?: Array<{
         title?: string;
         headers: string[];
-        rows: any[][];
+        rows?: any[][];
+        data?: any[][]; // Support both formats
       }>;
       charts?: Array<{
         type?: 'bar' | 'line' | 'pie';
@@ -46,6 +48,8 @@ interface DashboardRendererProps {
   }
   
   const DashboardRenderer: React.FC<DashboardRendererProps> = ({ content }) => {
+    console.log('DashboardRenderer received content:', content);
+
     const transformChartData = (chartData: { labels: string[]; values: number[] }) => {
         return chartData.labels.map((label, index) => ({
           name: label,
@@ -78,6 +82,11 @@ interface DashboardRendererProps {
                       {card.description}
                     </p>
                   )}
+                  {card.status && (
+                    <Badge variant="secondary" className="mt-2">
+                      {card.status}
+                    </Badge>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -85,79 +94,90 @@ interface DashboardRendererProps {
         )}
   
         {/* Charts Section */}
-        {content.charts?.map((chart, index) => (
-          <Card key={`chart-${index}`} className="mt-4">
-            <CardHeader>
-              <CardTitle>{chart.title || 'Data Visualization'}</CardTitle>
-            </CardHeader>
-            <CardContent className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                {chart.type === 'pie' ? (
-                  <PieChart>
-                    <Pie data={transformChartData(chart.data)} dataKey="value">
-                      {chart.data.labels.map((_, i) => (
-                        <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                ) : (
-                  <BarChart data={transformChartData(chart.data)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="#8884d8" />
-                  </BarChart>
-                )}
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        ))}
+        {content.charts?.map((chart, index) => {
+          console.log('Rendering chart:', chart);
+          return (
+            <Card key={`chart-${index}`} className="mt-4">
+              <CardHeader>
+                <CardTitle>{chart.title || 'Data Visualization'}</CardTitle>
+              </CardHeader>
+              <CardContent className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  {chart.type === 'pie' ? (
+                    <PieChart>
+                      <Pie data={transformChartData(chart.data)} dataKey="value">
+                        {chart.data.labels.map((_, i) => (
+                          <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  ) : (
+                    <BarChart data={transformChartData(chart.data)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#8884d8" />
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          );
+        })}
   
         {/* Tables Section */}
-        {content.tables?.map((table, index) => (
-          <div key={`table-${index}`} className="mt-4">
-            {table.title && <h3 className="text-lg font-semibold mb-2">{table.title}</h3>}
-            <div className="border rounded-lg overflow-hidden">
-            <UiTable>
-                <TableHeader>
-                  <TableRow>
-                    {table.headers.map((header, i) => (
-                      <TableHead key={`header-${i}`}>{header}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {table.rows.map((row, rowIndex) => (
-                    <TableRow key={`row-${rowIndex}`}>
-                      {row.map((cell, cellIndex) => (
-                        <TableCell key={`cell-${cellIndex}`}>{cell}</TableCell>
+        {content.tables?.map((table, index) => {
+          console.log('Rendering table:', table);
+          // Support both 'rows' and 'data' formats
+          const tableData = table.rows || table.data || [];
+          
+          return (
+            <div key={`table-${index}`} className="mt-4">
+              {table.title && <h3 className="text-lg font-semibold mb-2">{table.title}</h3>}
+              <div className="border rounded-lg overflow-hidden">
+                <UiTable>
+                  <TableHeader>
+                    <TableRow>
+                      {table.headers.map((header, i) => (
+                        <TableHead key={`header-${i}`}>{header}</TableHead>
                       ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </UiTable>
+                  </TableHeader>
+                  <TableBody>
+                    {tableData.map((row, rowIndex) => (
+                      <TableRow key={`row-${rowIndex}`}>
+                        {row.map((cell, cellIndex) => (
+                          <TableCell key={`cell-${cellIndex}`}>{cell}</TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </UiTable>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
   
         {/* Alerts Section */}
-        {content.alerts?.length > 0 && (
+        {content.alerts && content.alerts.length > 0 && (
           <div className="space-y-2 mt-4">
             {content.alerts.map((alert, index) => (
               <Alert 
                 key={`alert-${index}`}
                 variant={alert.startsWith('⚠️') ? 'destructive' : 'default'}
               >
-                {alert.replace(/[⚠️✅]/g, '').trim()}
+                <AlertDescription>
+                  {alert.replace(/[⚠️✅]/g, '').trim()}
+                </AlertDescription>
               </Alert>
             ))}
           </div>
         )}
   
         {/* Recommendations Section */}
-        {content.recommendations?.length > 0 && (
+        {content.recommendations && content.recommendations.length > 0 && (
           <Card className="mt-4">
             <CardHeader>
               <CardTitle>Recommendations</CardTitle>
@@ -178,4 +198,4 @@ interface DashboardRendererProps {
     );
   };
 
-  export default  DashboardRenderer;
+  export default DashboardRenderer;
