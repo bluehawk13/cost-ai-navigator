@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,16 +111,16 @@ const ChatInterfaceWithSidebar = () => {
     try {
       console.log('Sending message to agent API:', userMessageContent);
       
-      const response = await fetch(import.meta.env.VITE_AGENT_API_URL, {
+      const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_AGENT_API_KEY
+          'x-api-key': 'sk-default-DDZnBXRl6l6iKKj7YT39T4rCh4Qvb7za'
         },
         body: JSON.stringify({
-          user_id: import.meta.env.VITE_DEFAULT_USER_EMAIL,
-          agent_id: import.meta.env.VITE_AGENT_ID,
-          session_id: import.meta.env.VITE_SESSION_ID,
+          user_id: 'jaswanth6365@gmail.com',
+          agent_id: '683d63dfe5bd32ccbe6470a8',
+          session_id: '683d63dfe5bd32ccbe6470a8-1rw8wb2mp7r',
           message: userMessageContent
         })
       });
@@ -249,7 +248,6 @@ const ChatInterfaceWithSidebar = () => {
     }
   };
 
-  // ... rest of the component remains the same ...
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
