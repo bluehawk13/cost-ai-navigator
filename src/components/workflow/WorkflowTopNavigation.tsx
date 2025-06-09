@@ -19,7 +19,9 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  FolderOpen
+  FolderOpen,
+  Trash2,
+  Edit
 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { Node, Edge } from '@xyflow/react';
@@ -57,7 +59,7 @@ const WorkflowTopNavigation = ({
   onLoadWorkflow,
   onLoadWorkflowFromDB
 }: WorkflowTopNavigationProps) => {
-  const { workflows, loading } = useWorkflows();
+  const { workflows, loading, deleteWorkflow } = useWorkflows();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveAsTemplateDialogOpen, setSaveAsTemplateDialogOpen] = useState(false);
   const [workflowName, setWorkflowName] = useState('');
@@ -390,14 +392,30 @@ output "workflow_info" {
     return config;
   };
 
+  const handleDeleteWorkflow = async (workflowId: string, workflowName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${workflowName}"? This action cannot be undone.`)) {
+      try {
+        await deleteWorkflow(workflowId);
+        toast({
+          title: "Success",
+          description: `Workflow "${workflowName}" deleted successfully`,
+        });
+      } catch (error) {
+        console.error('Delete workflow error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete workflow. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   return (
     <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
       {/* Left Section - Logo and Main Menu */}
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
-          {/* <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-            <FileText className="h-5 w-5 text-white" />
-          </div> */}
           <span className="text-lg font-semibold text-gray-900">Workflow Builder</span>
           <Badge variant="secondary" className="text-xs">Beta</Badge>
         </div>
@@ -449,6 +467,38 @@ output "workflow_info" {
                     </MenubarItem>
                   ))}
                 </>
+              )}
+            </MenubarContent>
+          </MenubarMenu>
+
+          {/* Edit Menu */}
+          <MenubarMenu>
+            <MenubarTrigger className="text-sm">Edit</MenubarTrigger>
+            <MenubarContent>
+              {workflows.length > 0 ? (
+                <>
+                  <MenubarItem disabled className="font-medium">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Manage Workflows
+                  </MenubarItem>
+                  {workflows.map((workflow) => (
+                    <MenubarItem 
+                      key={workflow.id}
+                      onClick={() => handleDeleteWorkflow(workflow.id, workflow.name)}
+                      className="pl-6 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      <div>
+                        <div className="font-medium">Delete {workflow.name}</div>
+                        <div className="text-xs text-gray-500">Remove this workflow permanently</div>
+                      </div>
+                    </MenubarItem>
+                  ))}
+                </>
+              ) : (
+                <MenubarItem disabled>
+                  No workflows to manage
+                </MenubarItem>
               )}
             </MenubarContent>
           </MenubarMenu>

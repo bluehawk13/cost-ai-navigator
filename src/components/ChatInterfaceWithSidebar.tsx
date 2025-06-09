@@ -18,72 +18,73 @@ import rehypeRaw from 'rehype-raw';
 import ReactMarkdown from 'react-markdown';
 
 interface AgentResponse {
-  textView: string;
-  dashboardView: {
-    summaryCards: any[];
-    tables: any[];
-    charts: any[];
-    alerts: any[];
-    recommendations: any[];
+  response?: string;
+  textView?: string;
+  dashboardView?: {
+    summaryCards?: any[];
+    tables?: any[];
+    charts?: any[];
+    alerts?: any[];
+    recommendations?: any[];
   };
 }
 
 const ChatInterfaceWithSidebar = () => {
-    const { user } = useAuth();
-    const {
-      currentSessionId,
-      messages,
-      isLoading: sessionLoading,
-      createNewSession,
-      loadSession,
-      saveMessage,
-      updateSessionTitle,
-      setMessages,
-      clearCurrentSession,
-    } = useChatSession();
-  
-    const [inputMessage, setInputMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
-    const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
-    const [showCheckboxes, setShowCheckboxes] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-    const scrollToBottom = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-  
-    useEffect(() => {
-      scrollToBottom();
-    }, [messages]);
-  
-    const handleNewChat = async () => {
-      clearCurrentSession();
-      await createNewSession();
-    };
-  
-    const handleSessionSelect = async (sessionId: string) => {
-      clearCurrentSession();
-      await loadSession(sessionId);
-    };
-  
-    const toggleMessageView = (messageId: string) => {
-      setMessageViewModes(prev => ({
-        ...prev,
-        [messageId]: prev[messageId] === 'dashboard' ? 'text' : 'dashboard'
-      }));
-    };
-  
-    const handleMessageToggle = (messageId: string) => {
-      const newSelected = new Set(selectedMessages);
-      if (newSelected.has(messageId)) {
-        newSelected.delete(messageId);
-      } else {
-        newSelected.add(messageId);
-      }
-      setSelectedMessages(newSelected);
-    };
+  const { user } = useAuth();
+  const {
+    currentSessionId,
+    messages,
+    isLoading: sessionLoading,
+    createNewSession,
+    loadSession,
+    saveMessage,
+    updateSessionTitle,
+    setMessages,
+    clearCurrentSession,
+  } = useChatSession();
+
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [showCheckboxes, setShowCheckboxes] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleNewChat = async () => {
+    clearCurrentSession();
+    await createNewSession();
+  };
+
+  const handleSessionSelect = async (sessionId: string) => {
+    clearCurrentSession();
+    await loadSession(sessionId);
+  };
+
+  const toggleMessageView = (messageId: string) => {
+    setMessageViewModes(prev => ({
+      ...prev,
+      [messageId]: prev[messageId] === 'dashboard' ? 'text' : 'dashboard'
+    }));
+  };
+
+  const handleMessageToggle = (messageId: string) => {
+    const newSelected = new Set(selectedMessages);
+    if (newSelected.has(messageId)) {
+      newSelected.delete(messageId);
+    } else {
+      newSelected.add(messageId);
+    }
+    setSelectedMessages(newSelected);
+  };
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading || !user) return;
@@ -134,19 +135,31 @@ const ChatInterfaceWithSidebar = () => {
       const data: AgentResponse = await response.json();
       console.log('Received agent response:', data);
 
-      const assistantResponse = data || {
-        textView: "I apologize, but I couldn't process your request. Please try again.",
-        dashboardView: {
-          summaryCards: [],
-          tables: [],
-          charts: [],
-          alerts: [],
-          recommendations: []
+      let assistantResponse;
+      
+      // Handle different response formats
+      if (data.response) {
+        try {
+          // Try to parse the response field as JSON
+          const parsedResponse = JSON.parse(data.response);
+          if (parsedResponse.textView || parsedResponse.dashboardView) {
+            assistantResponse = JSON.stringify(parsedResponse);
+          } else {
+            assistantResponse = data.response;
+          }
+        } catch (e) {
+          // If parsing fails, use response as plain text
+          assistantResponse = data.response;
         }
-      };
+      } else if (data.textView || data.dashboardView) {
+        // Direct structured response
+        assistantResponse = JSON.stringify(data);
+      } else {
+        assistantResponse = "I apologize, but I couldn't process your request. Please try again.";
+      }
 
       console.log('Saving assistant response:', assistantResponse);
-      await saveMessage(JSON.stringify(assistantResponse), 'assistant');
+      await saveMessage(assistantResponse, 'assistant');
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -158,16 +171,7 @@ const ChatInterfaceWithSidebar = () => {
         variant: "destructive",
       });
       
-      const errorMessage = JSON.stringify({
-        textView: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
-        dashboardView: {
-          summaryCards: [],
-          tables: [],
-          charts: [],
-          alerts: [],
-          recommendations: []
-        }
-      });
+      const errorMessage = "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
       await saveMessage(errorMessage, 'assistant');
     } finally {
       setIsLoading(false);
@@ -187,7 +191,7 @@ const ChatInterfaceWithSidebar = () => {
 
   const renderMessageContent = (message: any) => {
     const viewMode = messageViewModes[message.id] || 'text';
-    console.log('Rendering message content for:', message.id, 'viewMode:', viewMode);
+    console.log('Rendering message content for:', message.id, 'viewMode:', viewMode, 'content:', message.content);
   
     try {
       const parsedContent = JSON.parse(message.content) as {
@@ -237,7 +241,7 @@ const ChatInterfaceWithSidebar = () => {
       );
     } catch (e) {
       console.error('Error parsing message content:', e);
-      // Fallback for non-JSON messages
+      // Fallback for non-JSON messages - render as plain text with markdown
       return (
         <div className="text-sm leading-relaxed whitespace-pre-wrap">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -378,7 +382,7 @@ const ChatInterfaceWithSidebar = () => {
           {error && (
             <div className="flex justify-center">
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-red-600" />
+                <AlertCircle className="w-4 w-4 text-red-600" />
                 <span className="text-sm text-red-600">{error}</span>
               </div>
             </div>
