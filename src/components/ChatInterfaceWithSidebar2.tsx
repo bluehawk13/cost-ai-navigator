@@ -17,73 +17,62 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import ReactMarkdown from 'react-markdown';
 
-interface AgentResponse {
-  textView: string;
-  dashboardView: {
-    summaryCards: any[];
-    tables: any[];
-    charts: any[];
-    alerts: any[];
-    recommendations: any[];
-  };
-}
-
 const ChatInterfaceWithSidebar = () => {
-    const { user } = useAuth();
-    const {
-      currentSessionId,
-      messages,
-      isLoading: sessionLoading,
-      createNewSession,
-      loadSession,
-      saveMessage,
-      updateSessionTitle,
-      setMessages,
-      clearCurrentSession,
-    } = useChatSession();
-  
-    const [inputMessage, setInputMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
-    const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
-    const [showCheckboxes, setShowCheckboxes] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-    const scrollToBottom = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-  
-    useEffect(() => {
-      scrollToBottom();
-    }, [messages]);
-  
-    const handleNewChat = async () => {
-      clearCurrentSession();
-      await createNewSession();
-    };
-  
-    const handleSessionSelect = async (sessionId: string) => {
-      clearCurrentSession();
-      await loadSession(sessionId);
-    };
-  
-    const toggleMessageView = (messageId: string) => {
-      setMessageViewModes(prev => ({
-        ...prev,
-        [messageId]: prev[messageId] === 'dashboard' ? 'text' : 'dashboard'
-      }));
-    };
-  
-    const handleMessageToggle = (messageId: string) => {
-      const newSelected = new Set(selectedMessages);
-      if (newSelected.has(messageId)) {
-        newSelected.delete(messageId);
-      } else {
-        newSelected.add(messageId);
-      }
-      setSelectedMessages(newSelected);
-    };
+  const { user } = useAuth();
+  const {
+    currentSessionId,
+    messages,
+    isLoading: sessionLoading,
+    createNewSession,
+    loadSession,
+    saveMessage,
+    updateSessionTitle,
+    setMessages,
+    clearCurrentSession,
+  } = useChatSession();
+
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [showCheckboxes, setShowCheckboxes] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleNewChat = async () => {
+    clearCurrentSession();
+    await createNewSession();
+  };
+
+  const handleSessionSelect = async (sessionId: string) => {
+    clearCurrentSession();
+    await loadSession(sessionId);
+  };
+
+  const toggleMessageView = (messageId: string) => {
+    setMessageViewModes(prev => ({
+      ...prev,
+      [messageId]: prev[messageId] === 'dashboard' ? 'text' : 'dashboard'
+    }));
+  };
+
+  const handleMessageToggle = (messageId: string) => {
+    const newSelected = new Set(selectedMessages);
+    if (newSelected.has(messageId)) {
+      newSelected.delete(messageId);
+    } else {
+      newSelected.add(messageId);
+    }
+    setSelectedMessages(newSelected);
+  };
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading || !user) return;
@@ -122,25 +111,16 @@ const ChatInterfaceWithSidebar = () => {
           message: userMessageContent
         })
       });
-    //    console.log("Responsejson="+response.json());
-       console.log("Response::"+response);
+    
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: AgentResponse = await response.json();
-      const assistantResponse = data || {
-        textView: "I apologize, but I couldn't process your request. Please try again.",
-        dashboardView: {
-          summaryCards: [],
-          tables: [],
-          charts: [],
-          alerts: [],
-          recommendations: []
-        }
-      };
+      const data = await response.json();
+      const assistantResponse = data.response || "I apologize, but I couldn't process your request. Please try again.";
 
-      await saveMessage(JSON.stringify(assistantResponse), 'assistant');
+      await saveMessage(assistantResponse, 'assistant');
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -152,21 +132,13 @@ const ChatInterfaceWithSidebar = () => {
         variant: "destructive",
       });
       
-      const errorMessage = JSON.stringify({
-        textView: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
-        dashboardView: {
-          summaryCards: [],
-          tables: [],
-          charts: [],
-          alerts: [],
-          recommendations: []
-        }
-      });
+      const errorMessage = "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
       await saveMessage(errorMessage, 'assistant');
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -180,62 +152,60 @@ const ChatInterfaceWithSidebar = () => {
 
   const renderMessageContent = (message: any) => {
     const viewMode = messageViewModes[message.id] || 'text';
-  
-    try {
-      const parsedContent = JSON.parse(message.content) as {
-        textView?: string;
-        dashboardView?: {
-          summaryCards?: any[];
-          tables?: any[];
-          charts?: any[];
-          alerts?: any[];
-          recommendations?: any[];
-        };
-      };
-  
-      if (viewMode === 'dashboard' && parsedContent.dashboardView) {
-        return <DashboardRenderer content={parsedContent.dashboardView} />;
-      }
-  
-      // Default to textView if available, otherwise fallback to raw content
-      const markdownContent = parsedContent.textView || message.content;
-  
+    
+    if (viewMode === 'dashboard') {
+     
+      return <DashboardRenderer content={message.content} />;
+    }
+    
+    // Text view with tables and markdown
+    const tables = detectTablesInText(message.content);
+    
+    if (tables.length > 0) {
+      // Split content to show tables separately
+      const contentWithoutTables = message.content.split('\n').filter((line: string) => {
+        const hasTableMarkers = line.includes('|') || /\s{3,}/.test(line);
+        return !hasTableMarkers || line.trim().length === 0;
+      }).join('\n');
+      
       return (
-        <div className="prose max-w-none text-sm leading-relaxed">
-          <ReactMarkdown 
-            remarkPlugins={[remarkGfm]} 
-            rehypePlugins={[rehypeRaw]}
-            components={{
-              h1: ({ node, ...props }) => <h1 className="mt-4 mb-2 text-xl font-bold" {...props} />,
-              h2: ({ node, ...props }) => <h2 className="mt-4 mb-2 text-lg font-semibold" {...props} />,
-              h3: ({ node, ...props }) => <h3 className="mt-4 mb-2 text-base font-medium" {...props} />,
-              p: ({ node, ...props }) => <p className="mb-2" {...props} />,
-              ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
-              ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
-              table: ({ node, ...props }) => (
-                <div className="overflow-x-auto my-4">
-                  <table className="min-w-full border" {...props} />
-                </div>
-              ),
-            }}
-          >
-            {markdownContent}
-          </ReactMarkdown>
-        </div>
-      );
-    } catch (e) {
-      // Fallback for non-JSON messages
-      return (
-        <div className="text-sm leading-relaxed whitespace-pre-wrap">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {message.content}
-          </ReactMarkdown>
+        <div className="space-y-4">
+          {contentWithoutTables.trim() && (
+            <div className="prose max-w-none text-sm leading-relaxed">
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]} 
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  h1: ({ node, ...props }) => <h1 className="mt-4 mb-2 text-xl font-bold" {...props} />,
+                  h2: ({ node, ...props }) => <h2 className="mt-4 mb-2 text-lg font-semibold" {...props} />,
+                  h3: ({ node, ...props }) => <h3 className="mt-4 mb-2 text-base font-medium" {...props} />,
+                  p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                  ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                  ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                }}
+              >
+                {contentWithoutTables}
+              </ReactMarkdown>
+            </div>
+          )}
+          {tables.map((table, index) => (
+            <TableChart key={index} table={table} index={index} />
+          ))}
         </div>
       );
     }
+    
+    
+    return (
+      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      {message.content}
+      </ReactMarkdown>
+    </div>
+     
+    );
   };
 
-  // ... rest of the component remains the same ...
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}

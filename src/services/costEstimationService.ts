@@ -193,24 +193,50 @@ export const estimateWorkflowCost = async (
   };
 
   try {
-    console.log('Sending cost estimation request:', requestData);
+    console.log('Sending cost estimation request:', requestData.workflow_description);
     
     // Replace with actual lyzr.ai endpoint
-    const response = await fetch('https://api.lyzr.ai/v1/cost-estimation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Add API key header if needed
-        // 'Authorization': `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify(requestData)
-    });
-
+    // const response = await fetch('https://api.lyzr.ai/v1/cost-estimation', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     // Add API key header if needed
+    //     // 'Authorization': `Bearer ${API_KEY}`
+    //   },
+    //   body: JSON.stringify(requestData)
+    // });
+    // const response = await fetch(import.meta.env.VITE_AGENT_API_URL, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'x-api-key': import.meta.env.VITE_AGENT_API_KEY
+    //     },
+    //     body: JSON.stringify({
+    //       user_id: import.meta.env.VITE_DEFAULT_USER_EMAIL,
+    //       agent_id: import.meta.env.VITE_AGENT_ID,
+    //       session_id: import.meta.env.VITE_SESSION_ID,
+    //       message: JSON.stringify(requestData)
+    //     })
+    //   });
+    const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'sk-default-gLsaQsiInbLlKDdFTxKqVtaBvrSIeTIk'
+        },
+        body: JSON.stringify({
+            user_id: 'reddyjaswanth361@gmail.com',
+            agent_id: '6846bcf1e49ec5e8feda577d',
+            session_id: '6846bcf1e49ec5e8feda577d-7spmfclhbej',
+            message: JSON.stringify(requestData) // your request payload as object
+        })
+      });
+    console.log(response);
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }
-
-    const costData: CostEstimationResponse = await response.json();
+    const responseJson = await response.json();
+    const costData: CostEstimationResponse = JSON.parse(responseJson.response); 
     return costData;
   } catch (error) {
     console.error('Cost estimation API error:', error);
