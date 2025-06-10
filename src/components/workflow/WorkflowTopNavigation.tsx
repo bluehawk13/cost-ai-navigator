@@ -277,9 +277,10 @@ const WorkflowTopNavigation = ({
               throw new Error('Invalid workflow format: missing nodes array');
             }
             onLoadWorkflow(workflow);
+            const workflowName = workflow.metadata?.name;
             toast({
               title: "Workflow Imported",
-              description: `Imported workflow: ${workflow.metadata?.name || 'Unnamed'}`,
+              description: `Imported workflow: ${typeof workflowName === 'string' ? workflowName : 'Unnamed'}`,
             });
           } catch (error) {
             console.error('Import error:', error);
@@ -762,7 +763,7 @@ output "workflow_info" {
                 <Download className="h-4 w-4 mr-2" />
                 JSON Configuration
               </MenubarItem>
-              <MenubarItem onClick={onExportPDF}>
+              <MenubarItem onClick={handleExportPDF}>
                 PDF Report
               </MenubarItem>
               <MenubarItem onClick={handleExportTerraform}>
