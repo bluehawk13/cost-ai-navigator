@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +20,10 @@ interface UseCase {
 interface UseCaseDetailProps {
   useCase: UseCase;
   onBack: () => void;
+  onDeploy: (workflowId: string) => void;
 }
 
-const UseCaseDetail: React.FC<UseCaseDetailProps> = ({ useCase, onBack }) => {
+const UseCaseDetail: React.FC<UseCaseDetailProps> = ({ useCase, onBack, onDeploy }) => {
   const processSteps = [
     {
       step: 1,
@@ -81,6 +81,12 @@ const UseCaseDetail: React.FC<UseCaseDetailProps> = ({ useCase, onBack }) => {
       savings: "$120,000 annually"
     }
   ];
+
+  const handleDeployWorkflow = () => {
+    if (useCase.workflowId) {
+      onDeploy(useCase.workflowId);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -269,12 +275,12 @@ const UseCaseDetail: React.FC<UseCaseDetailProps> = ({ useCase, onBack }) => {
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    onClick={handleDeployWorkflow}
+                  >
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Deploy This Workflow
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    Customize Template
                   </Button>
                   <p className="text-xs text-gray-500 text-center">
                     Ready-to-deploy workflow templates with pre-configured AI models and integrations.
