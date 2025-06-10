@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ArrowLeft, DollarSign, TrendingUp, Clock, CheckCircle, Zap, Users, Building2 } from 'lucide-react';
+import { ArrowLeft, DollarSign, CheckCircle, Zap, Users, Building2 } from 'lucide-react';
 
 interface UseCase {
   id: string;
@@ -276,7 +277,7 @@ const UseCaseDetail: React.FC<UseCaseDetailProps> = ({ useCase, onBack, onDeploy
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <Button 
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                     onClick={handleDeployWorkflow}
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
