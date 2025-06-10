@@ -489,7 +489,7 @@ output "workflow_info" {
     }
 
     try {
-      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+      const pdf = new jsPDF('l', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
@@ -506,9 +506,9 @@ output "workflow_info" {
       
       // Calculate workflow bounds
       const minX = Math.min(...nodes.map(n => n.position.x));
-      const maxX = Math.max(...nodes.map(n => n.position.x + 200)); // assuming node width ~200
+      const maxX = Math.max(...nodes.map(n => n.position.x + 200));
       const minY = Math.min(...nodes.map(n => n.position.y));
-      const maxY = Math.max(...nodes.map(n => n.position.y + 100)); // assuming node height ~100
+      const maxY = Math.max(...nodes.map(n => n.position.y + 100));
       
       const workflowWidth = maxX - minX;
       const workflowHeight = maxY - minY;
@@ -532,25 +532,25 @@ output "workflow_info" {
         // Node border with type-specific colors
         switch (node.type) {
           case 'dataSource':
-            pdf.setDrawColor(59, 130, 246); // blue
+            pdf.setDrawColor(59, 130, 246);
             break;
           case 'aiModel':
-            pdf.setDrawColor(139, 92, 246); // purple
+            pdf.setDrawColor(139, 92, 246);
             break;
           case 'database':
-            pdf.setDrawColor(16, 185, 129); // green
+            pdf.setDrawColor(16, 185, 129);
             break;
           case 'logic':
-            pdf.setDrawColor(245, 158, 11); // amber
+            pdf.setDrawColor(245, 158, 11);
             break;
           case 'output':
-            pdf.setDrawColor(239, 68, 68); // red
+            pdf.setDrawColor(239, 68, 68);
             break;
           case 'cloud':
-            pdf.setDrawColor(6, 182, 212); // cyan
+            pdf.setDrawColor(6, 182, 212);
             break;
           default:
-            pdf.setDrawColor(107, 114, 128); // gray
+            pdf.setDrawColor(107, 114, 128);
         }
         pdf.setLineWidth(0.5);
         pdf.rect(x, y, width, height);
@@ -558,14 +558,14 @@ output "workflow_info" {
         // Node text
         pdf.setFontSize(8);
         pdf.setTextColor(0, 0, 0);
-        const text = node.data?.label || node.type;
+        const text = String(node.data?.label || node.type || '');
         const textWidth = pdf.getTextWidth(text);
         const textX = x + (width - textWidth) / 2;
         const textY = y + height / 2 + 1;
         pdf.text(text, textX, textY);
       });
       
-      // Draw edges (simplified as lines)
+      // Draw edges
       pdf.setDrawColor(100, 100, 100);
       pdf.setLineWidth(0.3);
       edges.forEach((edge) => {
