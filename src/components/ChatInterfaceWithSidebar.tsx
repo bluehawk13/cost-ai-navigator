@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { useChatSession } from '@/hooks/useChatSession';
 import ChatSidebar from './ChatSidebar';
+import SuggestionsSidebar from './SuggestionsSidebar';
 import TableChart from './TableChart';
 import DashboardRenderer from './DashboardRenderer';
 import PdfDownloadControls from './PdfDownloadControls';
@@ -55,6 +55,7 @@ const ChatInterfaceWithSidebar = () => {
   const [showCheckboxes, setShowCheckboxes] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent>(getDefaultAgent());
   const [agentSwitching, setAgentSwitching] = useState(false);
+  const [suggestionsSidebarOpen, setSuggestionsSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -81,7 +82,6 @@ const ChatInterfaceWithSidebar = () => {
     setAgentSwitching(true);
     setSelectedAgent(agent);
     
-    // Add agent-specific welcome message to current session
     const welcomeMessage = {
       id: 'welcome-' + agent.id + '-' + Date.now(),
       content: agent.features.welcomeMessage,
@@ -108,6 +108,15 @@ const ChatInterfaceWithSidebar = () => {
       newSelected.add(messageId);
     }
     setSelectedMessages(newSelected);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputMessage(suggestion);
+    setSuggestionsSidebarOpen(false);
+  };
+
+  const toggleSuggestionsSidebar = () => {
+    setSuggestionsSidebarOpen(!suggestionsSidebarOpen);
   };
 
   const sendMessage = async () => {
@@ -161,10 +170,8 @@ const ChatInterfaceWithSidebar = () => {
 
       let assistantResponse;
       
-      // Handle different response formats
       if (data.response) {
         try {
-          // Try to parse the response field as JSON
           const parsedResponse = JSON.parse(data.response);
           if (parsedResponse.textView || parsedResponse.dashboardView) {
             assistantResponse = JSON.stringify(parsedResponse);
@@ -172,11 +179,9 @@ const ChatInterfaceWithSidebar = () => {
             assistantResponse = data.response;
           }
         } catch (e) {
-          // If parsing fails, use response as plain text
           assistantResponse = data.response;
         }
       } else if (data.textView || data.dashboardView) {
-        // Direct structured response
         assistantResponse = JSON.stringify(data);
       } else {
         assistantResponse = "I apologize, but I couldn't process your request. Please try again.";
@@ -236,7 +241,6 @@ const ChatInterfaceWithSidebar = () => {
         return <DashboardRenderer content={parsedContent.dashboardView} />;
       }
   
-      // Default to textView if available, otherwise fallback to raw content
       const markdownContent = parsedContent.textView || message.content;
       console.log('Rendering text view for message:', message.id);
   
@@ -265,7 +269,6 @@ const ChatInterfaceWithSidebar = () => {
       );
     } catch (e) {
       console.error('Error parsing message content:', e);
-      // Fallback for non-JSON messages - render as plain text with markdown
       return (
         <div className="text-sm leading-relaxed whitespace-pre-wrap">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -276,7 +279,6 @@ const ChatInterfaceWithSidebar = () => {
     }
   };
 
-  // Show loading state while auto-loading session
   if (!hasAutoLoadedSession && sessionLoading) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -291,7 +293,7 @@ const ChatInterfaceWithSidebar = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50 relative">
       {/* Sidebar */}
       <ChatSidebar
         currentSessionId={currentSessionId}
@@ -300,13 +302,14 @@ const ChatInterfaceWithSidebar = () => {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Agent Selector Header */}
         <AgentSelector
           agents={AGENTS}
           selectedAgent={selectedAgent}
           onAgentSelect={handleAgentSelect}
           isLoading={agentSwitching}
+          onToggleSuggestions={toggleSuggestionsSidebar}
         />
 
         {/* PDF Download Controls */}
@@ -315,15 +318,14 @@ const ChatInterfaceWithSidebar = () => {
           sessionId={currentSessionId}
         />
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* Messages - This area should scroll */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex w-full ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex items-start space-x-3 max-w-xs lg:max-w-5xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''} relative`}>
-                {/* Message Checkbox */}
                 <MessageCheckbox
                   messageId={message.id}
                   isSelected={selectedMessages.has(message.id)}
@@ -331,7 +333,6 @@ const ChatInterfaceWithSidebar = () => {
                   showCheckboxes={showCheckboxes}
                 />
 
-                {/* Avatar */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.sender === 'user' 
                     ? 'bg-blue-600' 
@@ -344,13 +345,11 @@ const ChatInterfaceWithSidebar = () => {
                   )}
                 </div>
                 
-                {/* Message Bubble */}
                 <div className={`rounded-lg p-4 max-w-full w-auto ${
                   message.sender === 'user'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                 }`}>
-                  {/* Toggle Button for AI messages - but NOT for welcome messages */}
                   {message.sender === 'assistant' && !message.id.startsWith('welcome-') && (
                     <div className="flex justify-end mb-3">
                       <Toggle
@@ -374,7 +373,6 @@ const ChatInterfaceWithSidebar = () => {
                     </div>
                   )}
                   
-                  {/* Message Content */}
                   {message.sender === 'user' ? (
                     <div className="prose max-w-none text-sm leading-relaxed">
                       <p className="text-white">{message.content}</p>
@@ -393,7 +391,6 @@ const ChatInterfaceWithSidebar = () => {
             </div>
           ))}
           
-          {/* Loading Indicator */}
           {isLoading && (
             <div className="flex justify-start">
               <div className="flex items-start space-x-3 max-w-xs lg:max-w-2xl">
@@ -410,7 +407,6 @@ const ChatInterfaceWithSidebar = () => {
             </div>
           )}
           
-          {/* Error Message */}
           {error && (
             <div className="flex justify-center">
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center space-x-2">
@@ -423,8 +419,8 @@ const ChatInterfaceWithSidebar = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="bg-white border-t border-gray-200 p-6">
+        {/* Input Area - Fixed at bottom */}
+        <div className="bg-white border-t border-gray-200 p-6 flex-shrink-0">
           <div className="flex space-x-3">
             <Input
               value={inputMessage}
@@ -447,9 +443,8 @@ const ChatInterfaceWithSidebar = () => {
             </Button>
           </div>
           
-          {/* Agent-specific Suggestions */}
           <div className="mt-3 flex flex-wrap gap-2">
-            {selectedAgent.features.suggestions.map((suggestion) => (
+            {selectedAgent.features.suggestions.slice(0, 4).map((suggestion) => (
               <button
                 key={suggestion}
                 onClick={() => setInputMessage(suggestion)}
@@ -462,6 +457,14 @@ const ChatInterfaceWithSidebar = () => {
           </div>
         </div>
       </div>
+
+      {/* Suggestions Sidebar */}
+      <SuggestionsSidebar
+        selectedAgent={selectedAgent}
+        isOpen={suggestionsSidebarOpen}
+        onClose={() => setSuggestionsSidebarOpen(false)}
+        onSuggestionClick={handleSuggestionClick}
+      />
     </div>
   );
 };
