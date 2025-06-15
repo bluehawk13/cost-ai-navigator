@@ -89,40 +89,14 @@ const WorkflowBuilder = () => {
     setSelectedNode(null);
   };
 
-  const handleSaveWorkflow = async (name: string, description?: string) => {
-    try {
-      await saveWorkflow(nodes, edges, name, description);
-      toast({
-        title: "Success",
-        description: "Workflow saved successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save workflow",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleLoadWorkflow = async (workflowId: string) => {
-    try {
-      const result = await loadWorkflow(workflowId);
-      if (result) {
-        setNodes(result.nodes);
-        setEdges(result.edges);
-        toast({
-          title: "Success",
-          description: "Workflow loaded successfully",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load workflow",
-        variant: "destructive",
-      });
-    }
+  const handleAddNode = (nodeType: string, position: { x: number; y: number }) => {
+    const newNode: Node = {
+      id: `${nodeType}-${Date.now()}`,
+      type: nodeType,
+      position,
+      data: { label: `${nodeType} node` },
+    };
+    setNodes((nds) => [...nds, newNode]);
   };
 
   return (
@@ -132,8 +106,6 @@ const WorkflowBuilder = () => {
         <WorkflowTopNavigation
           nodes={nodes}
           edges={edges}
-          onSave={handleSaveWorkflow}
-          onLoad={handleLoadWorkflow}
           setNodes={setNodes}
           setEdges={setEdges}
         />
@@ -141,7 +113,11 @@ const WorkflowBuilder = () => {
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar - Component Palette */}
           <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0">
-            <EnhancedComponentPalette />
+            <EnhancedComponentPalette 
+              onAddNode={handleAddNode}
+              isCollapsed={false}
+              onToggle={() => {}}
+            />
           </div>
 
           {/* Main Canvas */}
@@ -167,7 +143,6 @@ const WorkflowBuilder = () => {
           {/* Right Sidebar - Actions Panel */}
           <div className="w-96 bg-white border-l border-gray-200 flex-shrink-0">
             <WorkflowActionsPanel
-              selectedNode={selectedNode}
               nodes={nodes}
               setNodes={setNodes}
             />
