@@ -435,7 +435,7 @@ const WorkflowBuilderInner = () => {
         style: edge.style || {}
       })),
       metadata: {
-        name: workflowName || 'AI Workflow Export',
+        name: currentWorkflowName || 'AI Workflow Export',
         version: '1.0.0',
         createdAt: new Date().toISOString(),
         description: 'AI agent pipeline workflow with enhanced descriptions',
