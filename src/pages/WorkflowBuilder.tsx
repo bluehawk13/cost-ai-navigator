@@ -421,7 +421,7 @@ const WorkflowBuilderInner = () => {
           subtype: node.data?.subtype || '',
           provider: node.data?.provider || null,
           config: node.data?.config || {},
-          description: node.data?.description || ''
+          description: node.data?.description || '' // Include description in JSON export
         },
         style: node.style || {}
       })),
@@ -435,12 +435,13 @@ const WorkflowBuilderInner = () => {
         style: edge.style || {}
       })),
       metadata: {
-        name: 'AI Workflow Export',
+        name: workflowName || 'AI Workflow Export',
         version: '1.0.0',
         createdAt: new Date().toISOString(),
-        description: 'AI agent pipeline workflow',
+        description: 'AI agent pipeline workflow with enhanced descriptions',
         nodeCount: nodes.length,
-        edgeCount: edges.length
+        edgeCount: edges.length,
+        hasDescriptions: nodes.some(node => node.data?.description)
       }
     };
 
@@ -450,15 +451,15 @@ const WorkflowBuilderInner = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'ai-workflow.json';
+    a.download = `${(currentWorkflowName || 'ai-workflow').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
     a.click();
     URL.revokeObjectURL(url);
 
     toast({
       title: "Workflow Exported",
-      description: "Workflow saved as JSON file",
+      description: "Workflow with descriptions saved as JSON file",
     });
-  }, [nodes, edges]);
+  }, [nodes, edges, currentWorkflowName]);
 
   const handleExportPDF = useCallback(() => {
     toast({
