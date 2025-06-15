@@ -14,6 +14,7 @@ export const convertNodesToDatabase = (nodes: Node[], workflowId: string): Omit<
     config: {
       ...(node.data?.config && typeof node.data.config === 'object' ? node.data.config : {}),
       provider: node.data?.provider || null,
+      description: node.data?.description || '', // Include description in config
       onConfigChange: undefined // Remove function references that can't be serialized
     },
     style: node.style || {}
@@ -43,6 +44,7 @@ export const convertDatabaseToNodes = (dbNodes: WorkflowNode[]): Node[] => {
       subtype: node.subtype,
       provider: node.config?.provider || null,
       config: node.config || {},
+      description: node.config?.description || '', // Extract description from config
       // Note: onConfigChange will be re-added when the workflow is loaded
     },
     style: node.style as React.CSSProperties

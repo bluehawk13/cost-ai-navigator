@@ -284,9 +284,11 @@ const WorkflowBuilderInner = () => {
           subtype: node.data?.subtype || '',
           provider: node.data?.provider || null,
           config: node.data?.config || {},
-          description: node.data?.description || ''
+          description: node.data?.description || '' // Ensure description is saved
         }
       }));
+
+      console.log('Saving workflow with nodes:', nodesToSave.map(n => ({ id: n.id, description: n.data.description })));
 
       const workflowId = await saveWorkflow({
         name,
@@ -325,9 +327,11 @@ const WorkflowBuilderInner = () => {
             subtype: node.data?.subtype || '',
             provider: node.data?.provider || null,
             config: node.data?.config || {},
-            description: node.data?.description || '' // Restore description
+            description: node.data?.description || '' // Ensure description is restored
           }
         }));
+        
+        console.log('Loading workflow with nodes:', restoredNodes.map(n => ({ id: n.id, description: n.data.description })));
         
         setNodes(restoredNodes);
         setEdges(result.edges);
