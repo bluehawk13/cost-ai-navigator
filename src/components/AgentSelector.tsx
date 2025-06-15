@@ -21,9 +21,9 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
 }) => {
   return (
     <TooltipProvider>
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-3 relative z-50">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 relative z-50">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {agents.map((agent) => {
               const IconComponent = agent.ui.icon;
               const isSelected = selectedAgent.id === agent.id;
@@ -34,7 +34,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                     <TooltipTrigger asChild>
                       <Button
                         variant={isSelected ? "default" : "outline"}
-                        className={`w-full h-auto p-2 flex flex-col items-center space-y-1 transition-all duration-200 hover:scale-105 text-xs ${
+                        className={`w-full h-auto p-4 flex flex-col items-center space-y-2 transition-all duration-200 hover:scale-105 ${
                           isSelected 
                             ? `bg-gradient-to-r ${agent.ui.gradient} text-white shadow-lg` 
                             : 'hover:bg-gray-50 hover:border-gray-300'
@@ -42,12 +42,12 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                         onClick={() => onAgentSelect(agent)}
                         disabled={isLoading}
                       >
-                        <IconComponent className={`w-4 h-4 ${isSelected ? 'text-white' : `text-${agent.ui.color}-600`}`} />
+                        <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : `text-${agent.ui.color}-600`}`} />
                         <div className="text-center">
-                          <div className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                          <div className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                             {agent.name}
                           </div>
-                          <div className={`text-[10px] ${isSelected ? 'text-white/80' : 'text-gray-500'} truncate max-w-24`}>
+                          <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
                             {agent.shortDescription}
                           </div>
                         </div>
@@ -75,9 +75,9 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-white shadow-sm border z-10"
+                        className="absolute -top-1 -right-1 w-6 h-6 p-0 rounded-full bg-white shadow-sm border z-10"
                       >
-                        <Info className="w-2 h-2 text-gray-500" />
+                        <Info className="w-3 h-3 text-gray-500" />
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent side="bottom" className="w-80 z-[60] bg-white border shadow-lg">

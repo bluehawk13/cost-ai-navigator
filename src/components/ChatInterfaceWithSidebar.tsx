@@ -300,33 +300,29 @@ const ChatInterfaceWithSidebar = () => {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-screen">
-        {/* Fixed Agent Selector Header */}
-        <div className="flex-shrink-0">
-          <AgentSelector
-            agents={AGENTS}
-            selectedAgent={selectedAgent}
-            onAgentSelect={handleAgentSelect}
-            isLoading={agentSwitching}
-          />
-        </div>
+      <div className="flex-1 flex flex-col relative">
+        {/* Agent Selector Header */}
+        <AgentSelector
+          agents={AGENTS}
+          selectedAgent={selectedAgent}
+          onAgentSelect={handleAgentSelect}
+          isLoading={agentSwitching}
+        />
 
-        {/* Fixed PDF Download Controls */}
-        <div className="flex-shrink-0">
-          <PdfDownloadControls 
-            messages={messages} 
-            sessionId={currentSessionId}
-          />
-        </div>
+        {/* PDF Download Controls */}
+        <PdfDownloadControls 
+          messages={messages} 
+          sessionId={currentSessionId}
+        />
 
-        {/* Scrollable Messages Area - this is the only part that scrolls */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex w-full ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-4xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''} relative`}>
+              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-5xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''} relative`}>
                 {/* Message Checkbox */}
                 <MessageCheckbox
                   messageId={message.id}
@@ -427,8 +423,8 @@ const ChatInterfaceWithSidebar = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Fixed Input Area at Bottom */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
+        {/* Input Area */}
+        <div className="bg-white border-t border-gray-200 p-6">
           <div className="flex space-x-3">
             <Input
               value={inputMessage}
@@ -452,7 +448,7 @@ const ChatInterfaceWithSidebar = () => {
           </div>
           
           {/* Agent-specific Suggestions */}
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {selectedAgent.features.suggestions.map((suggestion) => (
               <button
                 key={suggestion}
