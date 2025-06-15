@@ -1,3 +1,4 @@
+
 import { Node, Edge } from '@xyflow/react';
 
 export interface WorkflowData {
@@ -93,7 +94,7 @@ const formatCloudNodeDetails = (node: Node) => {
   const pricingModel = getConfigProperty(config, 'pricingModel') || 'on-demand';
   const autoScaling = getConfigProperty(config, 'autoScaling') || {};
   
-  let details = `${provider.toUpperCase()} ${category} service: ${service}`;
+  let details = `${typeof provider === 'string' ? provider.toUpperCase() : String(provider).toUpperCase()} ${category} service: ${service}`;
   details += ` | Region: ${region}`;
   details += ` | Pricing: ${pricingModel}`;
   
@@ -121,7 +122,7 @@ const formatAIModelDetails = (node: Node) => {
   const costPerToken = getConfigProperty(config, 'costPerToken') || 0;
   const costPerHour = getConfigProperty(config, 'costPerHour') || 0;
   
-  let details = `${provider.toUpperCase()} AI Model: ${model}`;
+  let details = `${typeof provider === 'string' ? provider.toUpperCase() : String(provider).toUpperCase()} AI Model: ${model}`;
   details += ` | Max Tokens: ${maxTokens}`;
   details += ` | Temperature: ${temperature}`;
   
@@ -176,7 +177,7 @@ const formatDatabaseDetails = (node: Node) => {
   const storage = getConfigProperty(config, 'storage') || 'default';
   const connections = getConfigProperty(config, 'connections') || 100;
   
-  let details = `Database (${subtype.toUpperCase()})`;
+  let details = `Database (${typeof subtype === 'string' ? subtype.toUpperCase() : String(subtype).toUpperCase()})`;
   details += ` | Hosting: ${hosting}`;
   details += ` | Region: ${region}`;
   details += ` | Instance: ${instanceType}`;
