@@ -12,7 +12,7 @@ export const convertNodesToDatabase = (nodes: Node[], workflowId: string): Omit<
     position_x: node.position.x,
     position_y: node.position.y,
     config: {
-      ...node.data?.config,
+      ...(node.data?.config && typeof node.data.config === 'object' ? node.data.config : {}),
       provider: node.data?.provider || null,
       onConfigChange: undefined // Remove function references that can't be serialized
     },
