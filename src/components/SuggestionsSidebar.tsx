@@ -23,8 +23,13 @@ const SuggestionsSidebar: React.FC<SuggestionsSidebarProps> = ({
 
   const IconComponent = selectedAgent.ui.icon;
 
+  const handleSuggestionClick = (suggestion: string) => {
+    onSuggestionClick(suggestion);
+    // Don't close the sidebar - let user close it manually
+  };
+
   return (
-    <div className="fixed top-0 right-0 h-full w-80 bg-white border-l border-gray-200 shadow-lg z-50 flex flex-col">
+    <div className="fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 bg-white border-l border-gray-200 shadow-lg z-40 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -84,7 +89,7 @@ const SuggestionsSidebar: React.FC<SuggestionsSidebarProps> = ({
                 key={index}
                 variant="ghost"
                 className="w-full justify-start text-left h-auto p-3 hover:bg-gray-50 group"
-                onClick={() => onSuggestionClick(suggestion)}
+                onClick={() => handleSuggestionClick(suggestion)}
               >
                 <div className="flex items-start space-x-2 w-full">
                   <ArrowRight className="w-3 h-3 mt-0.5 text-gray-400 group-hover:text-blue-500 transition-colors" />

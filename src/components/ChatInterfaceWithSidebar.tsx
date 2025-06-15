@@ -83,7 +83,7 @@ const ChatInterfaceWithSidebar = () => {
     setSelectedAgent(agent);
     
     const welcomeMessage = {
-      id: 'welcome-' + agent.id + '-' + Date.now(),
+      id: 'welcome-' + agent.id + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
       content: agent.features.welcomeMessage,
       sender: 'assistant' as const,
       created_at: new Date().toISOString()

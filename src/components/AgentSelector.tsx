@@ -23,9 +23,9 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
 }) => {
   return (
     <TooltipProvider>
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-3 sticky top-0 z-40">
+      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 p-2 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 flex-1">
               {agents.map((agent) => {
                 const IconComponent = agent.ui.icon;
@@ -37,7 +37,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       <TooltipTrigger asChild>
                         <Button
                           variant={isSelected ? "default" : "outline"}
-                          className={`w-full h-auto p-3 flex flex-col items-center space-y-1 transition-all duration-200 hover:scale-105 ${
+                          className={`w-full h-auto p-2 flex flex-col items-center space-y-1 transition-all duration-200 hover:scale-105 ${
                             isSelected 
                               ? `bg-gradient-to-r ${agent.ui.gradient} text-white shadow-lg` 
                               : 'hover:bg-gray-50 hover:border-gray-300'
@@ -45,7 +45,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                           onClick={() => onAgentSelect(agent)}
                           disabled={isLoading}
                         >
-                          <IconComponent className={`w-5 h-5 ${isSelected ? 'text-white' : `text-${agent.ui.color}-600`}`} />
+                          <IconComponent className={`w-4 h-4 ${isSelected ? 'text-white' : `text-${agent.ui.color}-600`}`} />
                           <div className="text-center">
                             <div className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                               {agent.name}
@@ -78,7 +78,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-5 h-5 p-0 rounded-full bg-white shadow-sm border z-10"
+                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-white shadow-sm border z-10"
                         >
                           <Info className="w-2 h-2 text-gray-500" />
                         </Button>
@@ -129,22 +129,22 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
               })}
             </div>
             
-            {/* Suggestions Toggle Button */}
-            <div className="ml-4">
+            {/* Suggestions Toggle Button - Unique styling */}
+            <div className="flex-shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onToggleSuggestions}
-                    className="h-10 px-3 bg-white hover:bg-gray-50"
+                    className="h-10 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 shadow-lg"
                   >
                     <Lightbulb className="w-4 h-4 mr-2" />
-                    Suggestions
+                    <span className="font-medium">Get Ideas</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Show AI suggestions for better questions</p>
+                  <p>Get AI suggestions for better questions</p>
                 </TooltipContent>
               </Tooltip>
             </div>
