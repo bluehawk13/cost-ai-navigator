@@ -629,7 +629,7 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
     summary: {
       totalCompute: parseFloat((totalCost * 0.6).toFixed(2)),
       totalStorage: parseFloat((totalCost * 0.2).toFixed(2)),
-      totalNetwork: parseFloat((totalCost * 0.1).toFixe`),
+      totalNetwork: parseFloat((totalCost * 0.1).toFixed(2)),
       totalApiCalls: parseFloat((totalCost * 0.1).toFixed(2)),
       totalTokens: Math.floor(Math.random() * 100000)
     },
