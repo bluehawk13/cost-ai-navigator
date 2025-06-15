@@ -41,6 +41,7 @@ const ChatInterfaceWithSidebar = () => {
     updateSessionTitle,
     setMessages,
     clearCurrentSession,
+    hasAutoLoadedSession,
   } = useChatSession();
 
   const [inputMessage, setInputMessage] = useState('');
@@ -60,13 +61,13 @@ const ChatInterfaceWithSidebar = () => {
   }, [messages]);
 
   const handleNewChat = async () => {
-    clearCurrentSession();
     await createNewSession();
   };
 
   const handleSessionSelect = async (sessionId: string) => {
-    clearCurrentSession();
-    await loadSession(sessionId);
+    if (sessionId !== currentSessionId) {
+      await loadSession(sessionId);
+    }
   };
 
   const toggleMessageView = (messageId: string) => {
@@ -251,6 +252,20 @@ const ChatInterfaceWithSidebar = () => {
       );
     }
   };
+
+  // Show loading state while auto-loading session
+  if (!hasAutoLoadedSession && sessionLoading) {
+    return (
+      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center space-x-3">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <span className="text-lg text-gray-600">Loading your chat...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">

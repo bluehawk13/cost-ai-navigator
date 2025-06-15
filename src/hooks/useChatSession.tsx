@@ -23,6 +23,47 @@ export const useChatSession = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasAutoLoadedSession, setHasAutoLoadedSession] = useState(false);
+
+  // Auto-load the last used session when user is available
+  useEffect(() => {
+    if (user && !hasAutoLoadedSession && !currentSessionId) {
+      loadLastSession();
+    }
+  }, [user, hasAutoLoadedSession, currentSessionId]);
+
+  // Load the most recent session for auto-loading
+  const loadLastSession = async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const lastSession = data[0];
+        await loadSession(lastSession.id);
+      } else {
+        // No existing sessions, create a new one
+        await createNewSession();
+      }
+    } catch (error: any) {
+      console.error('Error loading last session:', error);
+      // Fallback to creating new session if loading fails
+      await createNewSession();
+    } finally {
+      setIsLoading(false);
+      setHasAutoLoadedSession(true);
+    }
+  };
 
   // Create a new chat session
   const createNewSession = async () => {
@@ -192,15 +233,23 @@ export const useChatSession = () => {
     setMessages([]);
   };
 
+  // Create new session and reset auto-load flag
+  const handleNewChat = async () => {
+    clearCurrentSession();
+    setHasAutoLoadedSession(false);
+    return await createNewSession();
+  };
+
   return {
     currentSessionId,
     messages,
     isLoading,
-    createNewSession,
+    createNewSession: handleNewChat,
     loadSession,
     saveMessage,
     updateSessionTitle,
     setMessages,
     clearCurrentSession,
+    hasAutoLoadedSession,
   };
 };
