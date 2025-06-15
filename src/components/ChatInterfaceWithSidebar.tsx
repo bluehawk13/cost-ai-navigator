@@ -290,7 +290,7 @@ const ChatInterfaceWithSidebar = () => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-80px)] bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex min-h-[calc(100vh-80px)] max-h-[calc(100vh-80px)] bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
       <ChatSidebar
         currentSessionId={currentSessionId}
@@ -299,22 +299,26 @@ const ChatInterfaceWithSidebar = () => {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative">
-        {/* Agent Selector Header */}
-        <AgentSelector
-          agents={AGENTS}
-          selectedAgent={selectedAgent}
-          onAgentSelect={handleAgentSelect}
-          isLoading={agentSwitching}
-        />
+      <div className="flex-1 flex flex-col h-full">
+        {/* Agent Selector Header - Fixed at top */}
+        <div className="flex-shrink-0">
+          <AgentSelector
+            agents={AGENTS}
+            selectedAgent={selectedAgent}
+            onAgentSelect={handleAgentSelect}
+            isLoading={agentSwitching}
+          />
+        </div>
 
-        {/* PDF Download Controls */}
-        <PdfDownloadControls 
-          messages={messages} 
-          sessionId={currentSessionId}
-        />
+        {/* PDF Download Controls - Fixed below agent selector */}
+        <div className="flex-shrink-0">
+          <PdfDownloadControls 
+            messages={messages} 
+            sessionId={currentSessionId}
+          />
+        </div>
 
-        {/* Messages */}
+        {/* Messages - Scrollable area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((message) => (
             <div
@@ -422,8 +426,8 @@ const ChatInterfaceWithSidebar = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="bg-white border-t border-gray-200 p-6">
+        {/* Input Area - Fixed at bottom */}
+        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-6">
           <div className="flex space-x-3">
             <Input
               value={inputMessage}
