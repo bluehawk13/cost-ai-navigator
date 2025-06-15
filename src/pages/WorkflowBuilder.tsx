@@ -26,6 +26,8 @@ import DatabaseNode from '@/components/workflow/nodes/DatabaseNode';
 import LogicNode from '@/components/workflow/nodes/LogicNode';
 import OutputNode from '@/components/workflow/nodes/OutputNode';
 import CloudProviderNode from '@/components/workflow/nodes/CloudProviderNode';
+import ComputeNode from '@/components/workflow/nodes/ComputeNode';
+import IntegrationNode from '@/components/workflow/nodes/IntegrationNode';
 
 const nodeTypes: NodeTypes = {
   dataSource: DataSourceNode,
@@ -34,6 +36,8 @@ const nodeTypes: NodeTypes = {
   logic: LogicNode,
   output: OutputNode,
   cloud: CloudProviderNode,
+  compute: ComputeNode,
+  integration: IntegrationNode,
 };
 
 const WorkflowBuilderInner = () => {
@@ -83,44 +87,97 @@ const WorkflowBuilderInner = () => {
   const getDefaultConfig = (nodeType: string, subtype: string, provider?: string) => {
     const configs: Record<string, Record<string, any>> = {
       cloud: {
-        aws: { region: 'us-east-1', service: '' },
-        gcp: { region: 'us-central1', service: '' },
-        azure: { region: 'East US', service: '' },
-        oracle: { region: 'us-ashburn-1', service: '' }
+        aws: { region: 'us-east-1', service: '', instanceType: 't3.medium' },
+        gcp: { region: 'us-central1', service: '', instanceType: 'n1-standard-1' },
+        azure: { region: 'East US', service: '', instanceType: 'Standard_B2s' },
+        oracle: { region: 'us-ashburn-1', service: '', instanceType: 'VM.Standard2.1' }
       },
       aiModel: {
-        openai: { model: '', maxTokens: 2000, temperature: 0.7 },
-        anthropic: { model: '', maxTokens: 2000, temperature: 0.7 },
-        mistral: { model: '', maxTokens: 2000, temperature: 0.7 },
-        google: { model: '', maxTokens: 2000, temperature: 0.7 },
-        meta: { model: '', maxTokens: 2000, temperature: 0.7 }
+        openai: { model: 'gpt-4o-mini', maxTokens: 2000, temperature: 0.7, costPerToken: 0.00015 },
+        anthropic: { model: 'claude-3-haiku', maxTokens: 2000, temperature: 0.7, costPerToken: 0.00025 },
+        mistral: { model: 'mistral-small', maxTokens: 2000, temperature: 0.7, costPerToken: 0.0002 },
+        google: { model: 'gemini-1.5-flash', maxTokens: 2000, temperature: 0.7, costPerToken: 0.000125 },
+        cohere: { model: 'command-r', maxTokens: 2000, temperature: 0.7, costPerToken: 0.0015 },
+        huggingface: { model: 'meta-llama/Llama-2-7b-chat-hf', maxTokens: 2000, temperature: 0.7, costPerHour: 0.60 }
       },
       dataSource: {
-        file: { acceptedTypes: ['pdf', 'txt', 'csv'], maxSize: '10MB' },
-        api: { url: '', method: 'GET', headers: {} },
-        scraper: { url: '', selector: '', frequency: 'daily' },
-        'aws-lambda': { region: 'us-east-1', runtime: 'python3.9' },
-        'aws-s3': { bucket: '', region: 'us-east-1' },
-        'gcp-functions': { region: 'us-central1', runtime: 'python39' },
-        'azure-blob': { account: '', container: '' }
+        file: { acceptedTypes: ['pdf', 'txt', 'csv', 'docx', 'xlsx'], maxSize: '50MB', processingCost: 0.001 },
+        api: { url: '', method: 'GET', headers: {}, rateLimitRpm: 1000, costPerRequest: 0.0001 },
+        scraper: { url: '', selector: '', frequency: 'daily', proxyCost: 0.01, dataCost: 0.001 },
+        database: { connectionString: '', query: '', syncFrequency: 'hourly', transferCost: 0.09 }
       },
       database: {
-        postgres: { connectionString: '', table: '' },
-        pinecone: { apiKey: '', index: '', dimension: 1536 },
-        redis: { host: 'localhost', port: 6379, db: 0 }
+        postgres: { 
+          hosting: 'self-hosted', 
+          region: 'us-east-1', 
+          instanceType: 'small',
+          connections: 100,
+          storage: '20GB'
+        },
+        mysql: { 
+          hosting: 'self-hosted', 
+          region: 'us-east-1', 
+          instanceType: 'small',
+          connections: 100,
+          storage: '20GB'
+        },
+        mongodb: { 
+          hosting: 'self-hosted', 
+          region: 'us-east-1', 
+          instanceType: 'small',
+          connections: 100,
+          storage: '20GB'
+        },
+        redis: { 
+          hosting: 'self-hosted', 
+          region: 'us-east-1', 
+          instanceType: 'small',
+          memory: '1GB',
+          persistence: false
+        },
+        pinecone: { 
+          hosting: 'pinecone-cloud', 
+          index: '', 
+          dimension: 1536, 
+          pods: 1,
+          replicas: 1
+        },
+        weaviate: { 
+          hosting: 'self-hosted', 
+          region: 'us-east-1', 
+          instanceType: 'small',
+          vectorizer: 'text2vec-openai'
+        },
+        chroma: { 
+          hosting: 'self-hosted', 
+          region: 'us-east-1', 
+          instanceType: 'small',
+          collections: 1
+        }
+      },
+      compute: {
+        serverless: { runtime: 'python3.9', memory: '128MB', timeout: '30s', costPerInvocation: 0.0000002 },
+        containers: { image: '', cpu: '0.25', memory: '0.5GB', replicas: 1, costPerHour: 0.05 },
+        edge: { locations: ['us-east', 'eu-west', 'ap-southeast'], latency: '<50ms', costPerRequest: 0.000001 }
       },
       logic: {
-        filter: { conditions: [], operator: 'AND' },
-        validate: { schema: {}, strict: true },
-        transform: { script: '', language: 'javascript' },
-        branch: { conditions: [], defaultPath: 'continue' },
-        python: { script: '', requirements: [] }
+        filter: { conditions: [], operator: 'AND', processingCost: 0.000001 },
+        transform: { script: '', language: 'javascript', processingCost: 0.000002 },
+        branch: { conditions: [], defaultPath: 'continue', processingCost: 0.000001 },
+        python: { script: '', requirements: [], runtime: 'python3.9', processingCost: 0.00001 },
+        javascript: { script: '', packages: [], runtime: 'node18', processingCost: 0.00001 }
+      },
+      integration: {
+        webhook: { url: '', method: 'POST', headers: {}, retries: 3, costPerRequest: 0.0001 },
+        queue: { provider: 'aws-sqs', region: 'us-east-1', dlq: true, costPerMessage: 0.0000004 },
+        streaming: { provider: 'kafka', partitions: 3, replication: 2, costPerMB: 0.10 }
       },
       output: {
-        pdf: { template: '', format: 'A4' },
-        email: { to: '', subject: '', template: '' },
-        webhook: { url: '', method: 'POST', headers: {} },
-        slack: { channel: '', webhook: '' }
+        pdf: { template: '', format: 'A4', costPerPage: 0.01 },
+        email: { provider: 'sendgrid', template: '', costPerEmail: 0.001 },
+        slack: { channel: '', webhook: '', costPerMessage: 0.0001 },
+        dashboard: { refreshRate: '30s', widgets: [], costPerView: 0.0001 },
+        api: { format: 'json', schema: {}, rateLimitRpm: 1000, costPerRequest: 0.0001 }
       }
     };
     
@@ -373,6 +430,8 @@ const WorkflowBuilderInner = () => {
                   case 'logic': return '#f59e0b';
                   case 'output': return '#ef4444';
                   case 'cloud': return '#06b6d4';
+                  case 'compute': return '#f97316';
+                  case 'integration': return '#6366f1';
                   default: return '#6b7280';
                 }
               }}
