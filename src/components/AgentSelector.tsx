@@ -21,7 +21,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
 }) => {
   return (
     <TooltipProvider>
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 relative z-50">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {agents.map((agent) => {
@@ -53,7 +53,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                         </div>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
+                    <TooltipContent side="bottom" className="max-w-xs z-[60]">
                       <div className="space-y-2">
                         <p className="font-medium">{agent.name}</p>
                         <p className="text-xs text-gray-600">{agent.fullDescription}</p>
@@ -75,12 +75,12 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="absolute -top-1 -right-1 w-6 h-6 p-0 rounded-full bg-white shadow-sm border"
+                        className="absolute -top-1 -right-1 w-6 h-6 p-0 rounded-full bg-white shadow-sm border z-10"
                       >
                         <Info className="w-3 h-3 text-gray-500" />
                       </Button>
                     </HoverCardTrigger>
-                    <HoverCardContent side="bottom" className="w-80">
+                    <HoverCardContent side="bottom" className="w-80 z-[60] bg-white border shadow-lg">
                       <div className="space-y-3">
                         <div className="flex items-center space-x-3">
                           <div className={`p-2 rounded-lg bg-gradient-to-r ${agent.ui.gradient}`}>

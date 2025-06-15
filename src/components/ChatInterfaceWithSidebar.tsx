@@ -80,18 +80,15 @@ const ChatInterfaceWithSidebar = () => {
     setAgentSwitching(true);
     setSelectedAgent(agent);
     
-    // Create new session for new agent and add welcome message
-    await createNewSession();
-    
-    // Add agent-specific welcome message
+    // Add agent-specific welcome message to current session
     const welcomeMessage = {
-      id: 'welcome-' + Date.now(),
+      id: 'welcome-' + agent.id + '-' + Date.now(),
       content: agent.features.welcomeMessage,
       sender: 'assistant' as const,
       created_at: new Date().toISOString()
     };
     
-    setMessages([welcomeMessage]);
+    setMessages(prev => [...prev, welcomeMessage]);
     setAgentSwitching(false);
   };
 
@@ -302,7 +299,7 @@ const ChatInterfaceWithSidebar = () => {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         {/* Agent Selector Header */}
         <AgentSelector
           agents={AGENTS}
