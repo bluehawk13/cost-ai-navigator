@@ -17,6 +17,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { toast } from "@/hooks/use-toast";
 import { useWorkflows } from '@/hooks/useWorkflows';
+import { useUnsavedChanges } from '@/hooks/workflow/useUnsavedChanges';
 import WorkflowTopNavigation from '@/components/workflow/WorkflowTopNavigation';
 import EnhancedComponentPalette from '@/components/workflow/EnhancedComponentPalette';
 import WorkflowActionsPanel from '@/components/workflow/WorkflowActionsPanel';
@@ -44,23 +45,26 @@ const WorkflowBuilderInner = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | undefined>();
+  const [currentWorkflowName, setCurrentWorkflowName] = useState<string>('');
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [costEstimationCounter, setCostEstimationCounter] = useState(0);
   
   const { saveWorkflow, loadWorkflow } = useWorkflows();
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const { hasUnsavedChanges, markAsChanged, markAsSaved } = useUnsavedChanges();
 
   const onConnect = useCallback(
     (params: Connection) => {
       console.log('Connecting nodes:', params);
       setEdges((eds) => addEdge(params, eds));
+      markAsChanged();
       toast({
         title: "Nodes Connected",
         description: "Successfully connected workflow components",
       });
     },
-    [setEdges]
+    [setEdges, markAsChanged]
   );
 
   const addNode = useCallback((nodeType: string, subtype: string, label: string, provider?: string) => {
@@ -77,12 +81,13 @@ const WorkflowBuilderInner = () => {
       },
     };
     setNodes((nds) => [...nds, newNode]);
+    markAsChanged();
     
     toast({
       title: "Component Added",
       description: `Added ${label} to workflow`,
     });
-  }, [setNodes]);
+  }, [setNodes, markAsChanged]);
 
   const getDefaultConfig = (nodeType: string, subtype: string, provider?: string) => {
     const configs: Record<string, Record<string, any>> = {
@@ -227,18 +232,26 @@ const WorkflowBuilderInner = () => {
         return node;
       })
     );
-  }, [setNodes]);
+    markAsChanged();
+  }, [setNodes, markAsChanged]);
 
   const handleNewWorkflow = useCallback(() => {
+    if (hasUnsavedChanges) {
+      const confirm = window.confirm('You have unsaved changes. Are you sure you want to create a new workflow?');
+      if (!confirm) return;
+    }
+
     setNodes([]);
     setEdges([]);
     setCurrentWorkflowId(undefined);
+    setCurrentWorkflowName('');
     setCostEstimationCounter(0);
+    markAsSaved();
     toast({
       title: "New Workflow",
       description: "Started a new workflow canvas",
     });
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, hasUnsavedChanges, markAsSaved]);
 
   const handleSaveWorkflow = useCallback(async (name: string, description: string) => {
     if (!name.trim()) {
@@ -283,13 +296,22 @@ const WorkflowBuilderInner = () => {
       if (workflowId && !currentWorkflowId) {
         setCurrentWorkflowId(workflowId);
       }
+      
+      setCurrentWorkflowName(name);
+      markAsSaved();
+      
     } catch (error) {
       console.error('Error saving workflow:', error);
       // Error handling is done in the hook
     }
-  }, [saveWorkflow, nodes, edges, currentWorkflowId]);
+  }, [saveWorkflow, nodes, edges, currentWorkflowId, markAsSaved]);
 
   const handleLoadWorkflow = useCallback(async (workflowId: string) => {
+    if (hasUnsavedChanges) {
+      const confirm = window.confirm('You have unsaved changes. Are you sure you want to load a different workflow?');
+      if (!confirm) return;
+    }
+
     try {
       const result = await loadWorkflow(workflowId);
       if (result) {
@@ -310,7 +332,9 @@ const WorkflowBuilderInner = () => {
         setNodes(restoredNodes);
         setEdges(result.edges);
         setCurrentWorkflowId(workflowId);
+        setCurrentWorkflowName(result.workflow.name);
         setCostEstimationCounter(0);
+        markAsSaved();
         toast({
           title: "Success",
           description: `Loaded workflow: ${result.workflow.name}`,
@@ -319,9 +343,14 @@ const WorkflowBuilderInner = () => {
     } catch (error) {
       console.error('Error loading workflow:', error);
     }
-  }, [loadWorkflow, setNodes, setEdges, handleNodeConfigChange]);
+  }, [loadWorkflow, setNodes, setEdges, handleNodeConfigChange, hasUnsavedChanges, markAsSaved]);
 
   const handleLoadWorkflowData = useCallback((workflowData: any) => {
+    if (hasUnsavedChanges) {
+      const confirm = window.confirm('You have unsaved changes. Are you sure you want to load this workflow?');
+      if (!confirm) return;
+    }
+
     if (workflowData.nodes) {
       const restoredNodes = workflowData.nodes.map(node => ({
         ...node,
@@ -341,8 +370,10 @@ const WorkflowBuilderInner = () => {
       setEdges(workflowData.edges);
     }
     setCurrentWorkflowId(undefined);
+    setCurrentWorkflowName('');
     setCostEstimationCounter(0);
-  }, [setNodes, setEdges, handleNodeConfigChange]);
+    markAsSaved();
+  }, [setNodes, setEdges, handleNodeConfigChange, hasUnsavedChanges, markAsSaved]);
 
   const handleRunCostEstimation = useCallback(() => {
     if (nodes.length === 0) {
@@ -431,6 +462,17 @@ const WorkflowBuilderInner = () => {
     });
   }, []);
 
+  // Track changes when nodes or edges change
+  React.useEffect(() => {
+    if (nodes.length > 0 || edges.length > 0) {
+      // Only mark as changed if we actually have content and it's not a fresh load
+      const hasContent = nodes.length > 0 || edges.length > 0;
+      if (hasContent && !hasUnsavedChanges) {
+        // This is likely a fresh load, don't mark as changed immediately
+      }
+    }
+  }, [nodes.length, edges.length]);
+
   // Fit view when nodes change
   React.useEffect(() => {
     if (nodes.length > 0) {
@@ -446,6 +488,8 @@ const WorkflowBuilderInner = () => {
       <WorkflowTopNavigation
         nodes={nodes}
         edges={edges}
+        currentWorkflowName={currentWorkflowName}
+        hasUnsavedChanges={hasUnsavedChanges}
         onNewWorkflow={handleNewWorkflow}
         onSaveWorkflow={handleSaveWorkflow}
         onExportJSON={handleExportJSON}
