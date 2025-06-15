@@ -196,22 +196,6 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed, onToggle }: Enhanced
           subtype: 'mistral', 
           provider: 'mistral', 
           description: 'Efficient European AI models'
-        },
-        { 
-          id: 'cohere', 
-          name: 'Cohere', 
-          type: 'aiModel', 
-          subtype: 'cohere', 
-          provider: 'cohere', 
-          description: 'Enterprise-focused language models'
-        },
-        { 
-          id: 'huggingface', 
-          name: 'Hugging Face', 
-          type: 'aiModel', 
-          subtype: 'huggingface', 
-          provider: 'huggingface', 
-          description: 'Open-source model hub'
         }
       ]
     },
@@ -261,7 +245,7 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed, onToggle }: Enhanced
         },
         { 
           id: 'api-gateway', 
-          name: 'API Gateway', 
+          name: 'API Source', 
           type: 'dataSource', 
           subtype: 'api', 
           description: 'Connect to external REST/GraphQL APIs'
@@ -358,6 +342,13 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed, onToggle }: Enhanced
           type: 'integration', 
           subtype: 'streaming', 
           description: 'Real-time event processing'
+        },
+        { 
+          id: 'email', 
+          name: 'Email', 
+          type: 'integration', 
+          subtype: 'email', 
+          description: 'Send email notifications'
         }
       ]
     },
@@ -368,14 +359,6 @@ const EnhancedComponentPalette = ({ onAddNode, isCollapsed, onToggle }: Enhanced
       color: 'text-black',
       expanded: false,
       items: [
-        { 
-          id: 'email', 
-          name: 'Email', 
-          type: 'output', 
-          subtype: 'email', 
-          description: 'Send email notifications',
-          icon: <Mail className="h-4 w-4 text-black" />
-        },
         { 
           id: 'slack', 
           name: 'Slack', 

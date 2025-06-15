@@ -22,7 +22,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'dataSource',
         position: { x: 100, y: 100 },
         data: {
-          label: 'Document Upload',
+          label: 'File Upload',
           subtype: 'file',
           config: {
             acceptedTypes: ['pdf', 'txt', 'docx'],
@@ -36,7 +36,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'logic',
         position: { x: 350, y: 100 },
         data: {
-          label: 'Text Chunking',
+          label: 'Transform',
           subtype: 'transform',
           config: {
             script: 'Split documents into chunks of 1000 characters with 200 character overlap',
@@ -50,7 +50,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'aiModel',
         position: { x: 600, y: 100 },
         data: {
-          label: 'Text Embeddings',
+          label: 'OpenAI',
           subtype: 'openai',
           provider: 'openai',
           config: {
@@ -66,7 +66,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'database',
         position: { x: 850, y: 100 },
         data: {
-          label: 'Vector Database',
+          label: 'Pinecone',
           subtype: 'pinecone',
           config: {
             hosting: 'pinecone-cloud',
@@ -82,7 +82,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'dataSource',
         position: { x: 100, y: 300 },
         data: {
-          label: 'User Query',
+          label: 'API Source',
           subtype: 'api',
           config: {
             url: '/api/chat',
@@ -97,7 +97,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'database',
         position: { x: 350, y: 300 },
         data: {
-          label: 'Similarity Search',
+          label: 'Pinecone',
           subtype: 'pinecone',
           config: {
             hosting: 'pinecone-cloud',
@@ -113,7 +113,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'aiModel',
         position: { x: 600, y: 300 },
         data: {
-          label: 'Response Generation',
+          label: 'OpenAI',
           subtype: 'openai',
           provider: 'openai',
           config: {
@@ -129,7 +129,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'output',
         position: { x: 850, y: 300 },
         data: {
-          label: 'Chat Response',
+          label: 'API Response',
           subtype: 'api',
           config: {
             format: 'json',
@@ -160,7 +160,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'dataSource',
         position: { x: 100, y: 100 },
         data: {
-          label: 'CSV Data Import',
+          label: 'File Upload',
           subtype: 'file',
           config: {
             acceptedTypes: ['csv', 'xlsx'],
@@ -174,7 +174,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'logic',
         position: { x: 350, y: 100 },
         data: {
-          label: 'Data Cleaning',
+          label: 'Custom Python',
           subtype: 'python',
           config: {
             script: 'import pandas as pd\n# Clean and validate data\ndf = df.dropna()\ndf = df.drop_duplicates()',
@@ -189,7 +189,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'database',
         position: { x: 600, y: 100 },
         data: {
-          label: 'Data Warehouse',
+          label: 'PostgreSQL',
           subtype: 'postgres',
           config: {
             hosting: 'cloud',
@@ -205,7 +205,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'logic',
         position: { x: 350, y: 250 },
         data: {
-          label: 'Statistical Analysis',
+          label: 'Custom Python',
           subtype: 'python',
           config: {
             script: 'import scipy.stats as stats\n# Perform statistical analysis\nresults = stats.describe(data)',
@@ -220,7 +220,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'aiModel',
         position: { x: 600, y: 250 },
         data: {
-          label: 'Insights Generation',
+          label: 'OpenAI',
           subtype: 'openai',
           provider: 'openai',
           config: {
@@ -236,7 +236,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'output',
         position: { x: 850, y: 175 },
         data: {
-          label: 'PDF Report',
+          label: 'PDF Generator',
           subtype: 'pdf',
           config: {
             template: 'analytics-report',
@@ -250,7 +250,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'cloud',
         position: { x: 850, y: 300 },
         data: {
-          label: 'Cloud Storage',
+          label: 'AWS',
           subtype: 'aws',
           provider: 'aws',
           config: {
@@ -266,7 +266,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         type: 'integration',
         position: { x: 600, y: 400 },
         data: {
-          label: 'Email Notification',
+          label: 'Email',
           subtype: 'email',
           config: {
             provider: 'sendgrid',

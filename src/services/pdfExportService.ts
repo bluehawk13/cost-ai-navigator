@@ -128,7 +128,7 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
       
-      const label = node.data?.label || node.type || 'Node';
+      const label = (node.data?.label || node.type || 'Node') as string;
       const textWidth = pdf.getTextWidth(label);
       const textX = x + (width - textWidth) / 2;
       const textY = y + height / 2 - 5;
@@ -139,7 +139,7 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
       if (node.data?.subtype || node.data?.provider) {
         pdf.setFontSize(6);
         pdf.setFont('helvetica', 'normal');
-        const subtext = node.data?.provider || node.data?.subtype || '';
+        const subtext = (node.data?.provider || node.data?.subtype || '') as string;
         const subtextWidth = pdf.getTextWidth(subtext);
         const subtextX = x + (width - subtextWidth) / 2;
         pdf.text(subtext, subtextX, textY + 8);
@@ -168,7 +168,8 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(0, 0, 0);
-    pdf.text(`${index + 1}. ${node.data?.label || node.type || 'Component'}`, margin, yPosition);
+    const componentLabel = (node.data?.label || node.type || 'Component') as string;
+    pdf.text(`${index + 1}. ${componentLabel}`, margin, yPosition);
     yPosition += 8;
     
     // Component details
@@ -180,12 +181,12 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
     yPosition += 6;
     
     if (node.data?.subtype) {
-      pdf.text(`Subtype: ${node.data.subtype}`, margin + 5, yPosition);
+      pdf.text(`Subtype: ${String(node.data.subtype)}`, margin + 5, yPosition);
       yPosition += 6;
     }
     
     if (node.data?.provider) {
-      pdf.text(`Provider: ${node.data.provider}`, margin + 5, yPosition);
+      pdf.text(`Provider: ${String(node.data.provider)}`, margin + 5, yPosition);
       yPosition += 6;
     }
     
