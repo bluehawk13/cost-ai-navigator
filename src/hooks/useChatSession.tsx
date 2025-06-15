@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from "@/hooks/use-toast";
+import { getDefaultAgent } from '@/config/agents';
 
 interface Message {
   id: string;
@@ -85,10 +85,11 @@ export const useChatSession = () => {
       setMessages([]);
       setCurrentSessionId(data.id);
       
-      // Add welcome message for new session
+      // Add default agent welcome message for new session
+      const defaultAgent = getDefaultAgent();
       const welcomeMessage: Message = {
         id: 'welcome-' + data.id,
-        content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
+        content: defaultAgent.features.welcomeMessage,
         sender: 'assistant',
         created_at: new Date().toISOString()
       };
@@ -140,11 +141,12 @@ export const useChatSession = () => {
       setMessages(typedMessages);
       setCurrentSessionId(sessionId);
       
-      // If no messages in session, show welcome message
+      // If no messages in session, show default agent welcome message
       if (typedMessages.length === 0) {
+        const defaultAgent = getDefaultAgent();
         const welcomeMessage: Message = {
           id: 'welcome-' + sessionId,
-          content: `Hello${user.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your AI Cost Optimization Manager Agent. I can help you analyze your AI costs, find savings opportunities, calculate ROI, and identify automation workflows. What would you like to optimize today?`,
+          content: defaultAgent.features.welcomeMessage,
           sender: 'assistant',
           created_at: new Date().toISOString()
         };

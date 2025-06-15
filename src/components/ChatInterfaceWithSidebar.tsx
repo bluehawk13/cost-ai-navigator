@@ -12,7 +12,9 @@ import TableChart from './TableChart';
 import DashboardRenderer from './DashboardRenderer';
 import PdfDownloadControls from './PdfDownloadControls';
 import MessageCheckbox from './MessageCheckbox';
+import AgentSelector from './AgentSelector';
 import { detectTablesInText } from '@/utils/tableDetector';
+import { AGENTS, getDefaultAgent, Agent } from '@/config/agents';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import ReactMarkdown from 'react-markdown';
@@ -50,6 +52,8 @@ const ChatInterfaceWithSidebar = () => {
   const [messageViewModes, setMessageViewModes] = useState<{[key: string]: 'text' | 'dashboard'}>({});
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
   const [showCheckboxes, setShowCheckboxes] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent>(getDefaultAgent());
+  const [agentSwitching, setAgentSwitching] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -68,6 +72,27 @@ const ChatInterfaceWithSidebar = () => {
     if (sessionId !== currentSessionId) {
       await loadSession(sessionId);
     }
+  };
+
+  const handleAgentSelect = async (agent: Agent) => {
+    if (agent.id === selectedAgent.id) return;
+    
+    setAgentSwitching(true);
+    setSelectedAgent(agent);
+    
+    // Create new session for new agent and add welcome message
+    await createNewSession();
+    
+    // Add agent-specific welcome message
+    const welcomeMessage = {
+      id: 'welcome-' + Date.now(),
+      content: agent.features.welcomeMessage,
+      sender: 'assistant' as const,
+      created_at: new Date().toISOString()
+    };
+    
+    setMessages([welcomeMessage]);
+    setAgentSwitching(false);
   };
 
   const toggleMessageView = (messageId: string) => {
@@ -111,18 +136,18 @@ const ChatInterfaceWithSidebar = () => {
     }
     
     try {
-      console.log('Sending message to agent API:', userMessageContent);
+      console.log('Sending message to agent API:', userMessageContent, 'Agent:', selectedAgent.name);
       
-      const response = await fetch('https://agent-prod.studio.lyzr.ai/v3/inference/chat/', {
+      const response = await fetch(selectedAgent.apiConfig.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': 'sk-default-DDZnBXRl6l6iKKj7YT39T4rCh4Qvb7za'
+          'x-api-key': selectedAgent.apiConfig.apiKey
         },
         body: JSON.stringify({
-          user_id: 'jaswanth6365@gmail.com',
-          agent_id: '683d63dfe5bd32ccbe6470a8',
-          session_id: '683d63dfe5bd32ccbe6470a8-1rw8wb2mp7r',
+          user_id: selectedAgent.apiConfig.userId,
+          agent_id: selectedAgent.apiConfig.agentId,
+          session_id: selectedAgent.apiConfig.sessionId,
           message: userMessageContent
         })
       });
@@ -278,19 +303,13 @@ const ChatInterfaceWithSidebar = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-       
-        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-9">
-          <div className="flex items-center justify-center space-x-3">
-           
-            <div className="text-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Get instant insights on AI costs, ROI analysis, and optimization strategies
-              </h1>
-             
-             
-            </div>
-          </div>
-        </div>
+        {/* Agent Selector Header */}
+        <AgentSelector
+          agents={AGENTS}
+          selectedAgent={selectedAgent}
+          onAgentSelect={handleAgentSelect}
+          isLoading={agentSwitching}
+        />
 
         {/* PDF Download Controls */}
         <PdfDownloadControls 
@@ -318,12 +337,12 @@ const ChatInterfaceWithSidebar = () => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.sender === 'user' 
                     ? 'bg-blue-600' 
-                    : 'bg-gradient-to-r from-purple-600 to-blue-600'
+                    : `bg-gradient-to-r ${selectedAgent.ui.gradient}`
                 }`}>
                   {message.sender === 'user' ? (
                     <User className="w-4 h-4 text-white" />
                   ) : (
-                    <Bot className="w-4 h-4 text-white" />
+                    React.createElement(selectedAgent.ui.icon, { className: "w-4 h-4 text-white" })
                   )}
                 </div>
                 
@@ -380,13 +399,13 @@ const ChatInterfaceWithSidebar = () => {
           {isLoading && (
             <div className="flex justify-start">
               <div className="flex items-start space-x-3 max-w-xs lg:max-w-2xl">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
+                <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${selectedAgent.ui.gradient} flex items-center justify-center`}>
+                  {React.createElement(selectedAgent.ui.icon, { className: "w-4 h-4 text-white" })}
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                   <div className="flex items-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                    <span className="text-sm text-gray-600">Agent is thinking...</span>
+                    <span className="text-sm text-gray-600">{selectedAgent.name} is thinking...</span>
                   </div>
                 </div>
               </div>
@@ -413,14 +432,14 @@ const ChatInterfaceWithSidebar = () => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask about AI costs, ROI analysis, automation opportunities..."
+              placeholder={`Ask ${selectedAgent.name} about ${selectedAgent.shortDescription.toLowerCase()}...`}
               className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               disabled={isLoading}
             />
             <Button
               onClick={sendMessage}
               disabled={!inputMessage.trim() || isLoading}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className={`bg-gradient-to-r ${selectedAgent.ui.gradient} hover:opacity-90`}
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -430,9 +449,9 @@ const ChatInterfaceWithSidebar = () => {
             </Button>
           </div>
           
-          {/* Suggestions */}
+          {/* Agent-specific Suggestions */}
           <div className="mt-3 flex flex-wrap gap-2">
-            {['Analyze my AI costs', 'Find cost savings', 'Calculate ROI', 'Automation opportunities'].map((suggestion) => (
+            {selectedAgent.features.suggestions.map((suggestion) => (
               <button
                 key={suggestion}
                 onClick={() => setInputMessage(suggestion)}
