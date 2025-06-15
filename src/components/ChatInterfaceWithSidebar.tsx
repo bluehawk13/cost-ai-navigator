@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,7 +278,7 @@ const ChatInterfaceWithSidebar = () => {
   // Show loading state while auto-loading session
   if (!hasAutoLoadedSession && sessionLoading) {
     return (
-      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex min-h-[calc(100vh-80px)] bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="flex items-center space-x-3">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -291,7 +290,7 @@ const ChatInterfaceWithSidebar = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex min-h-[calc(100vh-80px)] bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
       <ChatSidebar
         currentSessionId={currentSessionId}
