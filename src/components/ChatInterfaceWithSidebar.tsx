@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -360,12 +359,12 @@ const ChatInterfaceWithSidebar = () => {
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     message.sender === 'user' 
                       ? 'bg-blue-600' 
-                      : `bg-gradient-to-r ${messageAgent.ui.gradient}`
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600'
                   }`}>
                     {message.sender === 'user' ? (
                       <User className="w-4 h-4 text-white" />
                     ) : (
-                      <MessageAgentIcon className="w-4 h-4 text-white" />
+                      <Bot className="w-4 h-4 text-white" />
                     )}
                   </div>
                   
@@ -420,7 +419,7 @@ const ChatInterfaceWithSidebar = () => {
             <div className="flex justify-start">
               <div className="flex items-start space-x-3 max-w-xs lg:max-w-2xl">
                 <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${selectedAgent.ui.gradient} flex items-center justify-center`}>
-                  {React.createElement(selectedAgent.ui.icon, { className: "w-4 h-4 text-white" })}
+                  <Bot className="w-4 h-4 text-white" />
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                   <div className="flex items-center space-x-2">

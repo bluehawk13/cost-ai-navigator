@@ -25,8 +25,8 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
     <TooltipProvider>
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 p-2 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between gap-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 flex-1">
               {agents.map((agent) => {
                 const IconComponent = agent.ui.icon;
                 const isSelected = selectedAgent.id === agent.id;
@@ -37,7 +37,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       <TooltipTrigger asChild>
                         <Button
                           variant={isSelected ? "default" : "outline"}
-                          className={`w-full h-auto p-2 flex flex-col items-center space-y-1 transition-all duration-200 hover:scale-105 ${
+                          className={`w-full h-12 p-1.5 flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 hover:scale-105 ${
                             isSelected 
                               ? `bg-gradient-to-r ${agent.ui.gradient} text-white shadow-lg` 
                               : 'hover:bg-gray-50 hover:border-gray-300'
@@ -45,13 +45,10 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                           onClick={() => onAgentSelect(agent)}
                           disabled={isLoading}
                         >
-                          <IconComponent className={`w-4 h-4 ${isSelected ? 'text-white' : `text-${agent.ui.color}-600`}`} />
+                          <IconComponent className={`w-3 h-3 ${isSelected ? 'text-white' : `text-${agent.ui.color}-600`}`} />
                           <div className="text-center">
-                            <div className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                            <div className={`text-xs font-medium leading-tight ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                               {agent.name}
-                            </div>
-                            <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
-                              {agent.shortDescription}
                             </div>
                           </div>
                         </Button>
@@ -78,9 +75,9 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-white shadow-sm border z-10"
+                          className="absolute -top-0.5 -right-0.5 w-3 h-3 p-0 rounded-full bg-white shadow-sm border z-10"
                         >
-                          <Info className="w-2 h-2 text-gray-500" />
+                          <Info className="w-1.5 h-1.5 text-gray-500" />
                         </Button>
                       </HoverCardTrigger>
                       <HoverCardContent side="bottom" className="w-80 z-[60] bg-white border shadow-lg">
@@ -137,10 +134,10 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onToggleSuggestions}
-                    className="h-10 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 shadow-lg"
+                    className="h-12 px-3 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white border-0 hover:from-amber-500 hover:via-orange-600 hover:to-red-600 shadow-lg transform hover:scale-105 transition-all duration-200"
                   >
-                    <Lightbulb className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Get Ideas</span>
+                    <Lightbulb className="w-4 h-4 mr-1" />
+                    <span className="font-semibold text-xs">Ideas</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
