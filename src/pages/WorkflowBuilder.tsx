@@ -27,6 +27,9 @@ const WorkflowBuilder = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [costEstimationCounter, setCostEstimationCounter] = useState(0);
+  const [currentWorkflowName, setCurrentWorkflowName] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const { saveWorkflow, loadWorkflow, loading } = useWorkflows();
 
@@ -89,14 +92,113 @@ const WorkflowBuilder = () => {
     setSelectedNode(null);
   };
 
-  const handleAddNode = (nodeType: string, position: { x: number; y: number }) => {
+  const handleAddNode = (nodeType: string, subtype: string, label: string, provider?: string) => {
     const newNode: Node = {
       id: `${nodeType}-${Date.now()}`,
       type: nodeType,
-      position,
-      data: { label: `${nodeType} node` },
+      position: { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
+      data: { 
+        label: label,
+        subtype: subtype,
+        provider: provider
+      },
     };
     setNodes((nds) => [...nds, newNode]);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleNewWorkflow = () => {
+    setNodes([]);
+    setEdges([]);
+    setCurrentWorkflowName('');
+    setHasUnsavedChanges(false);
+  };
+
+  const handleSaveWorkflow = async (name: string, description?: string) => {
+    try {
+      await saveWorkflow(nodes, edges, name, description);
+      setCurrentWorkflowName(name);
+      setHasUnsavedChanges(false);
+      toast({
+        title: "Success",
+        description: "Workflow saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save workflow",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportJSON = () => {
+    const workflowData = {
+      nodes,
+      edges,
+      name: currentWorkflowName || 'Untitled Workflow'
+    };
+    
+    const dataStr = JSON.stringify(workflowData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `${currentWorkflowName || 'workflow'}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleExportPDF = () => {
+    // PDF export logic will be handled by WorkflowTopNavigation
+  };
+
+  const handleRunCostEstimation = () => {
+    setCostEstimationCounter(prev => prev + 1);
+  };
+
+  const handleZoomIn = () => {
+    // Zoom functionality can be implemented later
+  };
+
+  const handleZoomOut = () => {
+    // Zoom functionality can be implemented later
+  };
+
+  const handleFitView = () => {
+    // Fit view functionality can be implemented later
+  };
+
+  const handleLoadWorkflow = (workflowData: any) => {
+    if (workflowData.nodes) {
+      setNodes(workflowData.nodes);
+    }
+    if (workflowData.edges) {
+      setEdges(workflowData.edges);
+    }
+    setHasUnsavedChanges(false);
+  };
+
+  const handleLoadWorkflowFromDB = async (workflowId: string) => {
+    try {
+      const result = await loadWorkflow(workflowId);
+      if (result) {
+        setNodes(result.nodes);
+        setEdges(result.edges);
+        setHasUnsavedChanges(false);
+        toast({
+          title: "Success",
+          description: "Workflow loaded successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load workflow",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -106,8 +208,18 @@ const WorkflowBuilder = () => {
         <WorkflowTopNavigation
           nodes={nodes}
           edges={edges}
-          setNodes={setNodes}
-          setEdges={setEdges}
+          currentWorkflowName={currentWorkflowName}
+          hasUnsavedChanges={hasUnsavedChanges}
+          onNewWorkflow={handleNewWorkflow}
+          onSaveWorkflow={handleSaveWorkflow}
+          onExportJSON={handleExportJSON}
+          onExportPDF={handleExportPDF}
+          onRunCostEstimation={handleRunCostEstimation}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onFitView={handleFitView}
+          onLoadWorkflow={handleLoadWorkflow}
+          onLoadWorkflowFromDB={handleLoadWorkflowFromDB}
         />
 
         <div className="flex-1 flex overflow-hidden">
@@ -144,7 +256,10 @@ const WorkflowBuilder = () => {
           <div className="w-96 bg-white border-l border-gray-200 flex-shrink-0">
             <WorkflowActionsPanel
               nodes={nodes}
-              setNodes={setNodes}
+              edges={edges}
+              isCollapsed={false}
+              onToggle={() => {}}
+              costEstimationCounter={costEstimationCounter}
             />
           </div>
         </div>
