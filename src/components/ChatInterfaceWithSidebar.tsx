@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,15 @@ interface AgentResponse {
     alerts?: any[];
     recommendations?: any[];
   };
+}
+
+// Extended message interface to include agent info
+interface MessageWithAgent {
+  id: string;
+  content: string;
+  sender: 'user' | 'assistant';
+  created_at: string;
+  agentId?: string; // Store which agent created this message
 }
 
 const ChatInterfaceWithSidebar = () => {
@@ -82,15 +92,26 @@ const ChatInterfaceWithSidebar = () => {
     setAgentSwitching(true);
     setSelectedAgent(agent);
     
-    const welcomeMessage = {
+    const welcomeMessage: MessageWithAgent = {
       id: 'welcome-' + agent.id + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
       content: agent.features.welcomeMessage,
       sender: 'assistant' as const,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      agentId: agent.id // Store which agent created this message
     };
     
     setMessages(prev => [...prev, welcomeMessage]);
     setAgentSwitching(false);
+  };
+
+  // Function to get agent info for a message
+  const getMessageAgent = (message: MessageWithAgent): Agent => {
+    if (message.agentId) {
+      const agent = AGENTS.find(a => a.id === message.agentId);
+      if (agent) return agent;
+    }
+    // Fallback to current selected agent for older messages without agentId
+    return selectedAgent;
   };
 
   const toggleMessageView = (messageId: string) => {
@@ -112,7 +133,6 @@ const ChatInterfaceWithSidebar = () => {
 
   const handleSuggestionClick = (suggestion: string) => {
     setInputMessage(suggestion);
-    setSuggestionsSidebarOpen(false);
   };
 
   const toggleSuggestionsSidebar = () => {
@@ -320,76 +340,81 @@ const ChatInterfaceWithSidebar = () => {
 
         {/* Messages - This area should scroll */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex w-full ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`flex items-start space-x-3 max-w-xs lg:max-w-5xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''} relative`}>
-                <MessageCheckbox
-                  messageId={message.id}
-                  isSelected={selectedMessages.has(message.id)}
-                  onToggle={handleMessageToggle}
-                  showCheckboxes={showCheckboxes}
-                />
+          {messages.map((message) => {
+            const messageAgent = getMessageAgent(message as MessageWithAgent);
+            const MessageAgentIcon = messageAgent.ui.icon;
+            
+            return (
+              <div
+                key={message.id}
+                className={`flex w-full ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`flex items-start space-x-3 max-w-xs lg:max-w-5xl ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''} relative`}>
+                  <MessageCheckbox
+                    messageId={message.id}
+                    isSelected={selectedMessages.has(message.id)}
+                    onToggle={handleMessageToggle}
+                    showCheckboxes={showCheckboxes}
+                  />
 
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.sender === 'user' 
-                    ? 'bg-blue-600' 
-                    : `bg-gradient-to-r ${selectedAgent.ui.gradient}`
-                }`}>
-                  {message.sender === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
-                  ) : (
-                    React.createElement(selectedAgent.ui.icon, { className: "w-4 h-4 text-white" })
-                  )}
-                </div>
-                
-                <div className={`rounded-lg p-4 max-w-full w-auto ${
-                  message.sender === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
-                }`}>
-                  {message.sender === 'assistant' && !message.id.startsWith('welcome-') && (
-                    <div className="flex justify-end mb-3">
-                      <Toggle
-                        pressed={messageViewModes[message.id] === 'dashboard'}
-                        onPressedChange={() => toggleMessageView(message.id)}
-                        size="sm"
-                        className="h-7 px-3 text-xs"
-                      >
-                        {messageViewModes[message.id] === 'dashboard' ? (
-                          <>
-                            <FileText className="w-3 h-3 mr-1" />
-                            Text View
-                          </>
-                        ) : (
-                          <>
-                            <BarChart className="w-3 h-3 mr-1" />
-                            Dashboard View
-                          </>
-                        )}
-                      </Toggle>
-                    </div>
-                  )}
-                  
-                  {message.sender === 'user' ? (
-                    <div className="prose max-w-none text-sm leading-relaxed">
-                      <p className="text-white">{message.content}</p>
-                    </div>
-                  ) : (
-                    renderMessageContent(message)
-                  )}
-                  
-                  <span className={`text-xs mt-3 block ${
-                    message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    message.sender === 'user' 
+                      ? 'bg-blue-600' 
+                      : `bg-gradient-to-r ${messageAgent.ui.gradient}`
                   }`}>
-                    {!message.id.startsWith('welcome-') ? formatTime(message.created_at) : 'Now'}
-                  </span>
+                    {message.sender === 'user' ? (
+                      <User className="w-4 h-4 text-white" />
+                    ) : (
+                      <MessageAgentIcon className="w-4 h-4 text-white" />
+                    )}
+                  </div>
+                  
+                  <div className={`rounded-lg p-4 max-w-full w-auto ${
+                    message.sender === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
+                  }`}>
+                    {message.sender === 'assistant' && !message.id.startsWith('welcome-') && (
+                      <div className="flex justify-end mb-3">
+                        <Toggle
+                          pressed={messageViewModes[message.id] === 'dashboard'}
+                          onPressedChange={() => toggleMessageView(message.id)}
+                          size="sm"
+                          className="h-7 px-3 text-xs"
+                        >
+                          {messageViewModes[message.id] === 'dashboard' ? (
+                            <>
+                              <FileText className="w-3 h-3 mr-1" />
+                              Text View
+                            </>
+                          ) : (
+                            <>
+                              <BarChart className="w-3 h-3 mr-1" />
+                              Dashboard View
+                            </>
+                          )}
+                        </Toggle>
+                      </div>
+                    )}
+                    
+                    {message.sender === 'user' ? (
+                      <div className="prose max-w-none text-sm leading-relaxed">
+                        <p className="text-white">{message.content}</p>
+                      </div>
+                    ) : (
+                      renderMessageContent(message)
+                    )}
+                    
+                    <span className={`text-xs mt-3 block ${
+                      message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    }`}>
+                      {!message.id.startsWith('welcome-') ? formatTime(message.created_at) : 'Now'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           
           {isLoading && (
             <div className="flex justify-start">
