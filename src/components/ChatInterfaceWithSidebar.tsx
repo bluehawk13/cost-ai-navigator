@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -349,8 +350,8 @@ const ChatInterfaceWithSidebar = () => {
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-900 border border-gray-200 shadow-sm'
                 }`}>
-                  {/* Toggle Button for AI messages */}
-                  {message.sender === 'assistant' && (
+                  {/* Toggle Button for AI messages - but NOT for welcome messages */}
+                  {message.sender === 'assistant' && !message.id.startsWith('welcome-') && (
                     <div className="flex justify-end mb-3">
                       <Toggle
                         pressed={messageViewModes[message.id] === 'dashboard'}
