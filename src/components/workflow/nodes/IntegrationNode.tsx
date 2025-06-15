@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Link, Webhook, MessageSquare, Zap, DollarSign } from 'lucide-react';
+import { Link, Webhook, MessageSquare, Zap } from 'lucide-react';
 
 const IntegrationNode = ({ data, id }: { data: any; id: string }) => {
   const [method, setMethod] = useState(data.config?.method || 'POST');
@@ -36,22 +36,22 @@ const IntegrationNode = ({ data, id }: { data: any; id: string }) => {
     switch (data.subtype) {
       case 'queue':
         return [
-          { value: 'aws-sqs', label: 'AWS SQS', cost: '$0.40/million messages' },
-          { value: 'gcp-pubsub', label: 'Google Pub/Sub', cost: '$0.40/million messages' },
-          { value: 'azure-servicebus', label: 'Azure Service Bus', cost: '$0.05/million messages' },
-          { value: 'rabbitmq', label: 'RabbitMQ', cost: '$50-200/month' }
+          { value: 'aws-sqs', label: 'AWS SQS' },
+          { value: 'gcp-pubsub', label: 'Google Pub/Sub' },
+          { value: 'azure-servicebus', label: 'Azure Service Bus' },
+          { value: 'rabbitmq', label: 'RabbitMQ' }
         ];
       case 'streaming':
         return [
-          { value: 'kafka', label: 'Apache Kafka', cost: '$0.10/MB/month' },
-          { value: 'aws-kinesis', label: 'AWS Kinesis', cost: '$0.014/shard/hour' },
-          { value: 'gcp-dataflow', label: 'Google Dataflow', cost: '$0.056/hour' },
-          { value: 'azure-eventhubs', label: 'Azure Event Hubs', cost: '$0.028/million events' }
+          { value: 'kafka', label: 'Apache Kafka' },
+          { value: 'aws-kinesis', label: 'AWS Kinesis' },
+          { value: 'gcp-dataflow', label: 'Google Dataflow' },
+          { value: 'azure-eventhubs', label: 'Azure Event Hubs' }
         ];
       default:
         return [
-          { value: 'http', label: 'HTTP/HTTPS', cost: '$0.0001/request' },
-          { value: 'tcp', label: 'TCP', cost: '$0.00005/request' }
+          { value: 'http', label: 'HTTP/HTTPS' },
+          { value: 'tcp', label: 'TCP' }
         ];
     }
   };
@@ -82,10 +82,7 @@ const IntegrationNode = ({ data, id }: { data: any; id: string }) => {
                 <SelectContent>
                   {getProviderOptions().map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      <div className="flex flex-col">
-                        <span>{option.label}</span>
-                        <span className="text-xs text-green-600">{option.cost}</span>
-                      </div>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -142,13 +139,6 @@ const IntegrationNode = ({ data, id }: { data: any; id: string }) => {
                 <span className="font-medium">{selectedProvider?.label}</span>
               </div>
             )}
-            <div className="flex items-center justify-between text-green-600">
-              <span className="flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                Cost:
-              </span>
-              <span className="font-medium">{selectedProvider?.cost || '$0.0001/request'}</span>
-            </div>
           </div>
         </div>
 

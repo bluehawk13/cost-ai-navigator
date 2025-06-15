@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Cpu, Server, Zap, DollarSign } from 'lucide-react';
+import { Cpu, Server, Zap } from 'lucide-react';
 
 const ComputeNode = ({ data, id }: { data: any; id: string }) => {
   const [runtime, setRuntime] = useState(data.config?.runtime || 'python3.9');
@@ -56,24 +56,22 @@ const ComputeNode = ({ data, id }: { data: any; id: string }) => {
   const getMemoryOptions = () => {
     if (data.subtype === 'serverless') {
       return [
-        { value: '128MB', label: '128 MB', cost: '$0.0000000208/ms' },
-        { value: '256MB', label: '256 MB', cost: '$0.0000000417/ms' },
-        { value: '512MB', label: '512 MB', cost: '$0.0000000833/ms' },
-        { value: '1GB', label: '1 GB', cost: '$0.0000001667/ms' },
-        { value: '2GB', label: '2 GB', cost: '$0.0000003333/ms' },
-        { value: '4GB', label: '4 GB', cost: '$0.0000006667/ms' }
+        { value: '128MB', label: '128 MB' },
+        { value: '256MB', label: '256 MB' },
+        { value: '512MB', label: '512 MB' },
+        { value: '1GB', label: '1 GB' },
+        { value: '2GB', label: '2 GB' },
+        { value: '4GB', label: '4 GB' }
       ];
     }
     return [
-      { value: '0.5GB', label: '0.5 GB', cost: '$0.02/hour' },
-      { value: '1GB', label: '1 GB', cost: '$0.04/hour' },
-      { value: '2GB', label: '2 GB', cost: '$0.08/hour' },
-      { value: '4GB', label: '4 GB', cost: '$0.16/hour' },
-      { value: '8GB', label: '8 GB', cost: '$0.32/hour' }
+      { value: '0.5GB', label: '0.5 GB' },
+      { value: '1GB', label: '1 GB' },
+      { value: '2GB', label: '2 GB' },
+      { value: '4GB', label: '4 GB' },
+      { value: '8GB', label: '8 GB' }
     ];
   };
-
-  const selectedMemory = getMemoryOptions().find(m => m.value === memory);
 
   return (
     <Card className="min-w-[280px] border-orange-200 bg-orange-50">
@@ -114,10 +112,7 @@ const ComputeNode = ({ data, id }: { data: any; id: string }) => {
               <SelectContent>
                 {getMemoryOptions().map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    <div className="flex flex-col">
-                      <span>{option.label}</span>
-                      <span className="text-xs text-green-600">{option.cost}</span>
-                    </div>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -145,12 +140,9 @@ const ComputeNode = ({ data, id }: { data: any; id: string }) => {
               <span>Runtime:</span>
               <span className="font-medium">{runtime}</span>
             </div>
-            <div className="flex items-center justify-between text-green-600">
-              <span className="flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                Cost:
-              </span>
-              <span className="font-medium">{selectedMemory?.cost || 'Variable'}</span>
+            <div className="flex items-center justify-between">
+              <span>Memory:</span>
+              <span className="font-medium">{memory}</span>
             </div>
           </div>
         </div>
