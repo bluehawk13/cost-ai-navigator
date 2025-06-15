@@ -87,10 +87,34 @@ const WorkflowBuilderInner = () => {
   const getDefaultConfig = (nodeType: string, subtype: string, provider?: string) => {
     const configs: Record<string, Record<string, any>> = {
       cloud: {
-        aws: { region: 'us-east-1', service: '', instanceType: 't3.medium' },
-        gcp: { region: 'us-central1', service: '', instanceType: 'n1-standard-1' },
-        azure: { region: 'East US', service: '', instanceType: 'Standard_B2s' },
-        oracle: { region: 'us-ashburn-1', service: '', instanceType: 'VM.Standard2.1' }
+        aws: { 
+          category: '', 
+          service: '', 
+          region: 'us-east-1', 
+          instanceType: '',
+          storage: { type: 'gp3', size: '20GB' }
+        },
+        gcp: { 
+          category: '', 
+          service: '', 
+          region: 'us-central1', 
+          instanceType: '',
+          storage: { type: 'pd-standard', size: '20GB' }
+        },
+        azure: { 
+          category: '', 
+          service: '', 
+          region: 'eastus', 
+          instanceType: '',
+          storage: { type: 'standard', size: '20GB' }
+        },
+        oracle: { 
+          category: '', 
+          service: '', 
+          region: 'us-ashburn-1', 
+          instanceType: '',
+          storage: { type: 'standard', size: '20GB' }
+        }
       },
       aiModel: {
         openai: { model: 'gpt-4o-mini', maxTokens: 2000, temperature: 0.7, costPerToken: 0.00015 },
