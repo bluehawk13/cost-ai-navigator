@@ -93,6 +93,7 @@ const formatCloudNodeDetails = (node: Node) => {
   const storage = getConfigProperty(config, 'storage') || {};
   const pricingModel = getConfigProperty(config, 'pricingModel') || 'on-demand';
   const autoScaling = getConfigProperty(config, 'autoScaling') || {};
+  const description = node.data?.description || 'No description provided';
   
   let details = `${typeof provider === 'string' ? provider.toUpperCase() : String(provider).toUpperCase()} ${category} service: ${service}`;
   details += ` | Region: ${region}`;
@@ -110,6 +111,8 @@ const formatCloudNodeDetails = (node: Node) => {
     details += ` | Auto-scaling: ${autoScaling.minInstances}-${autoScaling.maxInstances} instances`;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
@@ -121,6 +124,7 @@ const formatAIModelDetails = (node: Node) => {
   const temperature = getConfigProperty(config, 'temperature') || 0.7;
   const costPerToken = getConfigProperty(config, 'costPerToken') || 0;
   const costPerHour = getConfigProperty(config, 'costPerHour') || 0;
+  const description = node.data?.description || 'No description provided';
   
   let details = `${typeof provider === 'string' ? provider.toUpperCase() : String(provider).toUpperCase()} AI Model: ${model}`;
   details += ` | Max Tokens: ${maxTokens}`;
@@ -133,12 +137,15 @@ const formatAIModelDetails = (node: Node) => {
     details += ` | Cost per Hour: $${costPerHour}`;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
 const formatDataSourceDetails = (node: Node) => {
   const config = node.data?.config || {};
   const subtype = node.data?.subtype || 'unknown';
+  const description = node.data?.description || 'No description provided';
   
   let details = `Data Source (${subtype})`;
   
@@ -165,6 +172,8 @@ const formatDataSourceDetails = (node: Node) => {
       break;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
@@ -176,6 +185,7 @@ const formatDatabaseDetails = (node: Node) => {
   const instanceType = getConfigProperty(config, 'instanceType') || 'small';
   const storage = getConfigProperty(config, 'storage') || 'default';
   const connections = getConfigProperty(config, 'connections') || 100;
+  const description = node.data?.description || 'No description provided';
   
   let details = `Database (${typeof subtype === 'string' ? subtype.toUpperCase() : String(subtype).toUpperCase()})`;
   details += ` | Hosting: ${hosting}`;
@@ -191,12 +201,15 @@ const formatDatabaseDetails = (node: Node) => {
     details += ` | Dimensions: ${dimension} | Pods: ${pods}`;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
 const formatComputeDetails = (node: Node) => {
   const config = node.data?.config || {};
   const subtype = node.data?.subtype || 'unknown';
+  const description = node.data?.description || 'No description provided';
   
   let details = `Compute (${subtype})`;
   
@@ -220,12 +233,15 @@ const formatComputeDetails = (node: Node) => {
       break;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
 const formatLogicDetails = (node: Node) => {
   const config = node.data?.config || {};
   const subtype = node.data?.subtype || 'unknown';
+  const description = node.data?.description || 'No description provided';
   
   let details = `Logic (${subtype})`;
   
@@ -247,12 +263,15 @@ const formatLogicDetails = (node: Node) => {
       break;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
 const formatIntegrationDetails = (node: Node) => {
   const config = node.data?.config || {};
   const subtype = node.data?.subtype || 'unknown';
+  const description = node.data?.description || 'No description provided';
   
   let details = `Integration (${subtype})`;
   
@@ -275,12 +294,15 @@ const formatIntegrationDetails = (node: Node) => {
       break;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
 const formatOutputDetails = (node: Node) => {
   const config = node.data?.config || {};
   const subtype = node.data?.subtype || 'unknown';
+  const description = node.data?.description || 'No description provided';
   
   let details = `Output (${subtype})`;
   
@@ -309,18 +331,61 @@ const formatOutputDetails = (node: Node) => {
       break;
   }
   
+  details += ` | Description: "${description}"`;
+  
   return details;
 };
 
-export const createWorkflowDescription = (nodes: Node[]): string => {
+const formatConnectionDetails = (edges: Edge[], nodes: Node[]): string => {
+  if (edges.length === 0) {
+    return "No connections established between components.";
+  }
+
+  let connectionDetails = `WORKFLOW CONNECTIONS (${edges.length} total):\n`;
+  connectionDetails += "=" .repeat(50) + "\n";
+
+  edges.forEach((edge, index) => {
+    const sourceNode = nodes.find(n => n.id === edge.source);
+    const targetNode = nodes.find(n => n.id === edge.target);
+    
+    const sourceName = sourceNode?.data?.label || edge.source;
+    const targetName = targetNode?.data?.label || edge.target;
+    const sourceType = sourceNode?.type || 'unknown';
+    const targetType = targetNode?.type || 'unknown';
+    
+    connectionDetails += `${index + 1}. DATA FLOW: "${sourceName}" (${sourceType}) → "${targetName}" (${targetType})\n`;
+    connectionDetails += `   Connection ID: ${edge.id}\n`;
+    
+    if (edge.sourceHandle) {
+      connectionDetails += `   Source Handle: ${edge.sourceHandle}\n`;
+    }
+    if (edge.targetHandle) {
+      connectionDetails += `   Target Handle: ${edge.targetHandle}\n`;
+    }
+    
+    connectionDetails += `   Flow Direction: Data flows from ${sourceName} to ${targetName}\n\n`;
+  });
+
+  return connectionDetails;
+};
+
+export const createWorkflowDescription = (nodes: Node[], edges: Edge[] = []): string => {
   if (nodes.length === 0) {
     return "Empty workflow with no components.";
   }
 
-  let description = "AI WORKFLOW PIPELINE COST ESTIMATION REQUEST\n\n";
-  description += `Total Components: ${nodes.length} nodes\n\n`;
-  description += "DETAILED COMPONENT BREAKDOWN:\n";
-  description += "=".repeat(50) + "\n\n";
+  let description = "COMPREHENSIVE AI WORKFLOW PIPELINE COST ESTIMATION REQUEST\n\n";
+  description += `WORKFLOW OVERVIEW:\n`;
+  description += "=" .repeat(50) + "\n";
+  description += `Total Components: ${nodes.length} nodes\n`;
+  description += `Total Connections: ${edges.length} edges\n`;
+  description += `Workflow Complexity: ${edges.length > 5 ? 'High' : edges.length > 2 ? 'Medium' : 'Low'}\n\n`;
+
+  // Add connection details first for better context
+  description += formatConnectionDetails(edges, nodes);
+
+  description += "DETAILED COMPONENT BREAKDOWN WITH FULL CONFIGURATION:\n";
+  description += "=" .repeat(60) + "\n\n";
 
   // Group nodes by type for better organization
   const nodesByType: Record<string, Node[]> = {};
@@ -332,14 +397,14 @@ export const createWorkflowDescription = (nodes: Node[]): string => {
     nodesByType[nodeType].push(node);
   });
 
-  // Process each node type
+  // Process each node type with comprehensive details
   Object.entries(nodesByType).forEach(([nodeType, nodeList]) => {
-    description += `${nodeType.toUpperCase()} NODES (${nodeList.length}):\n`;
-    description += "-".repeat(30) + "\n";
+    description += `${nodeType.toUpperCase()} COMPONENTS (${nodeList.length}):\n`;
+    description += "-" .repeat(40) + "\n";
     
     nodeList.forEach((node, index) => {
       const label = typeof node.data?.label === 'string' ? node.data.label : node.id;
-      description += `${index + 1}. ${label} (ID: ${node.id})\n`;
+      description += `${index + 1}. COMPONENT: "${label}" (Node ID: ${node.id})\n`;
       
       let nodeDetails = '';
       switch (nodeType) {
@@ -368,6 +433,7 @@ export const createWorkflowDescription = (nodes: Node[]): string => {
           nodeDetails = formatOutputDetails(node);
           break;
         default:
+          const description = node.data?.description || 'No description provided';
           nodeDetails = `Component type: ${nodeType}`;
           if (node.data?.subtype) {
             nodeDetails += ` | Subtype: ${node.data.subtype}`;
@@ -375,44 +441,71 @@ export const createWorkflowDescription = (nodes: Node[]): string => {
           if (node.data?.provider) {
             nodeDetails += ` | Provider: ${node.data.provider}`;
           }
+          nodeDetails += ` | Description: "${description}"`;
       }
       
-      description += `   Details: ${nodeDetails}\n`;
-      description += `   Position: (${node.position.x}, ${node.position.y})\n\n`;
+      description += `   FULL CONFIGURATION: ${nodeDetails}\n`;
+      description += `   CANVAS POSITION: (X: ${node.position.x}, Y: ${node.position.y})\n`;
+      
+      // Add configuration object details if available
+      if (node.data?.config && Object.keys(node.data.config).length > 0) {
+        description += `   DETAILED CONFIG:\n`;
+        Object.entries(node.data.config).forEach(([key, value]) => {
+          description += `     - ${key}: ${JSON.stringify(value)}\n`;
+        });
+      }
+      
+      description += "\n";
     });
   });
 
-  description += "WORKFLOW CONNECTIONS:\n";
-  description += "=".repeat(50) + "\n";
+  description += "DATA FLOW ANALYSIS:\n";
+  description += "=" .repeat(50) + "\n";
   
-  // Add edges information for data flow understanding
-  const edgeGroups: Record<string, string[]> = {};
-  nodes.forEach(node => {
-    edgeGroups[node.id] = [];
-  });
+  // Analyze data flow patterns
+  const sourceNodes = nodes.filter(node => 
+    !edges.some(edge => edge.target === node.id) && 
+    edges.some(edge => edge.source === node.id)
+  );
+  const sinkNodes = nodes.filter(node => 
+    edges.some(edge => edge.target === node.id) && 
+    !edges.some(edge => edge.source === node.id)
+  );
+  const processingNodes = nodes.filter(node => 
+    edges.some(edge => edge.target === node.id) && 
+    edges.some(edge => edge.source === node.id)
+  );
 
-  // This would need to be passed from the edges parameter if available
-  // For now, we'll note that connection analysis would be beneficial
-  description += "Note: Workflow connections analysis would provide data flow patterns for more accurate cost estimation.\n\n";
+  description += `Data Entry Points: ${sourceNodes.length} (${sourceNodes.map(n => n.data?.label || n.id).join(', ')})\n`;
+  description += `Processing Components: ${processingNodes.length} (${processingNodes.map(n => n.data?.label || n.id).join(', ')})\n`;
+  description += `Output Destinations: ${sinkNodes.length} (${sinkNodes.map(n => n.data?.label || n.id).join(', ')})\n\n`;
 
   description += "COST ESTIMATION REQUIREMENTS:\n";
-  description += "=".repeat(50) + "\n";
-  description += "Please provide detailed monthly cost estimates including:\n";
-  description += "• Individual component costs with breakdown (compute, storage, network, API calls)\n";
-  description += "• Total workflow operating costs\n";
-  description += "• Cost optimization recommendations\n";
-  description += "• Alternative provider/service suggestions for cost savings\n";
-  description += "• Scaling cost projections\n";
-  description += "• Data transfer and egress cost analysis\n\n";
+  description += "=" .repeat(50) + "\n";
+  description += "Based on the comprehensive workflow analysis above, provide detailed cost estimates including:\n\n";
+  description += "REQUIRED COST BREAKDOWN:\n";
+  description += "• Individual component operational costs with detailed breakdown (compute, storage, network, API calls, tokens)\n";
+  description += "• Data transfer costs between connected components\n";
+  description += "• Total monthly workflow operating costs\n";
+  description += "• Peak usage vs average usage cost projections\n";
+  description += "• Regional cost variations for multi-region deployments\n\n";
+  
+  description += "OPTIMIZATION ANALYSIS:\n";
+  description += "• Identify cost optimization opportunities for each component\n";
+  description += "• Alternative provider/service suggestions with cost comparisons\n";
+  description += "• Scaling cost projections (10x, 100x current volume)\n";
+  description += "• Reserved instance vs on-demand cost analysis\n";
+  description += "• Auto-scaling cost impact analysis\n\n";
 
-  description += "ASSUMPTIONS FOR ESTIMATION:\n";
-  description += "• Monthly usage volume: 10,000 requests\n";
-  description += "• Data processing: 1GB per month\n";
-  description += "• Storage requirements: 100GB\n";
-  description += "• Standard business hours operation (8x5)\n";
-  description += "• Production environment with high availability requirements\n\n";
+  description += "ESTIMATION PARAMETERS:\n";
+  description += "• Monthly usage volume: 10,000 workflow executions\n";
+  description += "• Average data processing: 1GB per execution\n";
+  description += "• Storage requirements: 100GB persistent + 50GB temporary\n";
+  description += "• Operating schedule: 24/7 production environment\n";
+  description += "• High availability requirements: 99.9% uptime SLA\n";
+  description += "• Security compliance: Enterprise-grade encryption\n\n";
 
-  description += "Please analyze this comprehensive workflow configuration and provide accurate cost estimates based on current cloud provider pricing.";
+  description += "Please analyze this comprehensive workflow configuration and provide accurate, detailed cost estimates based on current cloud provider pricing models and the specific component configurations outlined above.";
 
   return description;
 };
@@ -429,7 +522,7 @@ export const estimateWorkflowCost = async (
     };
   } = {}
 ): Promise<CostEstimationResponse> => {
-  const workflowDescription = createWorkflowDescription(nodes);
+  const workflowDescription = createWorkflowDescription(nodes, edges);
   
   const requestData: CostEstimationRequest = {
     workflow_description: workflowDescription,
@@ -536,7 +629,7 @@ const generateMockCostEstimation = (nodes: Node[], edges: Edge[]): CostEstimatio
     summary: {
       totalCompute: parseFloat((totalCost * 0.6).toFixed(2)),
       totalStorage: parseFloat((totalCost * 0.2).toFixed(2)),
-      totalNetwork: parseFloat((totalCost * 0.1).toFixed(2)),
+      totalNetwork: parseFloat((totalCost * 0.1).toFixe`),
       totalApiCalls: parseFloat((totalCost * 0.1).toFixed(2)),
       totalTokens: Math.floor(Math.random() * 100000)
     },

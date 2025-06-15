@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -32,7 +33,11 @@ export const useWorkflowSave = () => {
                 name: finalName,
                 description: params.description,
                 version: '1.0.0',
-                metadata: { nodeCount: params.nodes.length, edgeCount: params.edges.length },
+                metadata: { 
+                  nodeCount: params.nodes.length, 
+                  edgeCount: params.edges.length,
+                  nodesWithDescriptions: params.nodes.filter(n => n.data?.description).length
+                },
                 updated_at: new Date().toISOString()
               })
               .eq('id', workflowId)
@@ -55,7 +60,11 @@ export const useWorkflowSave = () => {
                 name: finalName,
                 description: params.description,
                 version: '1.0.0',
-                metadata: { nodeCount: params.nodes.length, edgeCount: params.edges.length },
+                metadata: { 
+                  nodeCount: params.nodes.length, 
+                  edgeCount: params.edges.length,
+                  nodesWithDescriptions: params.nodes.filter(n => n.data?.description).length
+                },
                 user_id: user.id
               })
               .select()
@@ -89,7 +98,7 @@ export const useWorkflowSave = () => {
         await supabase.from('workflow_edges').delete().eq('workflow_id', workflowId);
       }
 
-      // Insert new nodes
+      // Insert new nodes with descriptions
       if (params.nodes.length > 0 && workflowId) {
         const nodeData = convertNodesToDatabase(params.nodes, workflowId);
         const { error: nodesError } = await supabase
@@ -111,7 +120,7 @@ export const useWorkflowSave = () => {
 
       toast({
         title: "Success",
-        description: `Workflow "${finalName}" saved successfully`,
+        description: `Workflow "${finalName}" saved successfully with all node descriptions`,
       });
 
       return workflowId;

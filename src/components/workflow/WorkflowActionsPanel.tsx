@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   DollarSign, 
   TrendingDown,
@@ -12,11 +14,13 @@ import {
   Calculator,
   ChevronDown,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  MessageSquare,
+  Eye
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 import { PieChart as RechartsPieChart, Cell, ResponsiveContainer, Tooltip, Pie } from 'recharts';
-import { estimateWorkflowCost, CostEstimationResponse, NodeCostBreakdown } from '@/services/costEstimationService';
+import { estimateWorkflowCost, CostEstimationResponse, NodeCostBreakdown, createWorkflowDescription } from '@/services/costEstimationService';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface WorkflowActionsPanelProps {
@@ -39,7 +43,14 @@ const WorkflowActionsPanel = ({
   const [costEstimation, setCostEstimation] = useState<CostEstimationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showNodeBreakdown, setShowNodeBreakdown] = useState(false);
+  const [showMessagePreview, setShowMessagePreview] = useState(false);
   const [lastEstimationCounter, setLastEstimationCounter] = useState(0);
+
+  // Generate the message content that will be sent to the API
+  const messageContent = useMemo(() => {
+    if (nodes.length === 0) return 'No workflow components to analyze.';
+    return createWorkflowDescription(nodes, edges);
+  }, [nodes, edges]);
 
   // Calculate cost estimation only when counter changes (button clicked) and only once per click
   React.useEffect(() => {
@@ -98,6 +109,47 @@ const WorkflowActionsPanel = ({
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Message Preview Section */}
+      <Card className="m-4 mb-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            API Message Preview
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-600">
+              Message content ({messageContent.length} characters)
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMessagePreview(!showMessagePreview)}
+              className="h-6 px-2"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              {showMessagePreview ? 'Hide' : 'Show'}
+            </Button>
+          </div>
+          
+          {showMessagePreview && (
+            <div className="border border-gray-200 rounded">
+              <Textarea
+                value={messageContent}
+                readOnly
+                className="text-xs font-mono resize-none min-h-[120px] max-h-[200px]"
+                placeholder="No workflow components to preview..."
+              />
+            </div>
+          )}
+          
+          <div className="text-xs text-gray-500">
+            This message will be sent to the cost estimation API when you click "Estimate" in the navigation.
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Cost Estimator */}
       <Card className="m-4 mb-2">
