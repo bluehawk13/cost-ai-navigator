@@ -56,57 +56,58 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
   pdf.text(nodes.length.toString(), margin + 5, 102);
   pdf.text(edges.length.toString(), margin + 85, 102);
   
-  // Enhanced Visual Diagram Section - Maximum Size
-  let yPosition = 120;
+  // Add new page dedicated ENTIRELY to the workflow diagram
+  pdf.addPage();
   
+  // Full page diagram header
+  pdf.setFillColor(59, 130, 246);
+  pdf.rect(0, 0, pageWidth, 30, 'F');
+  
+  pdf.setFontSize(20);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(255, 255, 255);
+  pdf.text('Workflow Architecture Diagram', margin, 20);
+  
+  // FULL PAGE diagram - Use entire page space
   if (nodes.length > 0) {
     // Find bounds of all nodes for scaling
     const minX = Math.min(...nodes.map(n => n.position.x));
-    const maxX = Math.max(...nodes.map(n => n.position.x + 300)); // Increased node width consideration
+    const maxX = Math.max(...nodes.map(n => n.position.x + 400)); // Larger node width consideration
     const minY = Math.min(...nodes.map(n => n.position.y));
-    const maxY = Math.max(...nodes.map(n => n.position.y + 120)); // Increased node height consideration
+    const maxY = Math.max(...nodes.map(n => n.position.y + 150)); // Larger node height consideration
     
     const diagramWidth = maxX - minX;
     const diagramHeight = maxY - minY;
     
-    // Calculate scale to fit diagram in available space - MAXIMUM SIZE
+    // Calculate scale to fit diagram in FULL PAGE - Maximum available space
     const availableWidth = pageWidth - 2 * margin;
-    const availableHeight = pageHeight - yPosition - margin - 10;
-    const scale = Math.min(availableWidth / diagramWidth, availableHeight / diagramHeight, 3) * 0.95; // Increased max scale
-    
-    // Diagram title with background
-    pdf.setFillColor(248, 250, 252);
-    pdf.roundedRect(margin, yPosition - 5, 120, 18, 3, 3, 'F');
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(51, 65, 85);
-    pdf.text('Workflow Architecture', margin + 5, yPosition + 6);
-    yPosition += 25;
+    const availableHeight = pageHeight - 40 - margin; // Leave space for header only
+    const scale = Math.min(availableWidth / diagramWidth, availableHeight / diagramHeight, 4) * 0.9; // Increased max scale
     
     const diagramStartX = margin + (availableWidth - diagramWidth * scale) / 2;
-    const diagramStartY = yPosition;
+    const diagramStartY = 40 + (availableHeight - diagramHeight * scale) / 2;
     
     // Draw enhanced connections with better styling
-    pdf.setLineWidth(2);
+    pdf.setLineWidth(3);
     
     edges.forEach(edge => {
       const sourceNode = nodes.find(n => n.id === edge.source);
       const targetNode = nodes.find(n => n.id === edge.target);
       
       if (sourceNode && targetNode) {
-        const sourceX = diagramStartX + (sourceNode.position.x - minX + 150) * scale; // Adjusted for larger nodes
-        const sourceY = diagramStartY + (sourceNode.position.y - minY + 60) * scale;
-        const targetX = diagramStartX + (targetNode.position.x - minX + 150) * scale;
-        const targetY = diagramStartY + (targetNode.position.y - minY + 60) * scale;
+        const sourceX = diagramStartX + (sourceNode.position.x - minX + 200) * scale; // Adjusted for larger nodes
+        const sourceY = diagramStartY + (sourceNode.position.y - minY + 75) * scale;
+        const targetX = diagramStartX + (targetNode.position.x - minX + 200) * scale;
+        const targetY = diagramStartY + (targetNode.position.y - minY + 75) * scale;
         
         // Connection line with gradient effect
         pdf.setDrawColor(99, 102, 241);
-        pdf.setLineWidth(2);
+        pdf.setLineWidth(3);
         pdf.line(sourceX, sourceY, targetX, targetY);
         
         // Enhanced arrow head
         const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
-        const arrowLength = 8;
+        const arrowLength = 12;
         pdf.setFillColor(99, 102, 241);
         
         const arrowX1 = targetX - arrowLength * Math.cos(angle - 0.4);
@@ -119,14 +120,14 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
       }
     });
     
-    // Draw enhanced nodes with MAXIMUM size and PROMINENT labels
+    // Draw LARGE nodes with FULL NAMES prominently displayed
     nodes.forEach(node => {
       const x = diagramStartX + (node.position.x - minX) * scale;
       const y = diagramStartY + (node.position.y - minY) * scale;
-      const width = 300 * scale; // Significantly increased
-      const height = 120 * scale; // Significantly increased
+      const width = 400 * scale; // Very large width
+      const height = 150 * scale; // Very large height
       
-      // Enhanced node colors with gradients
+      // Enhanced node colors
       const nodeColors = {
         dataSource: [59, 130, 246],     // Blue
         aiModel: [139, 92, 246],        // Purple
@@ -142,36 +143,36 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
       
       // Drop shadow effect
       pdf.setFillColor(0, 0, 0);
-      pdf.setGState(pdf.GState({ opacity: 0.15 }));
-      pdf.roundedRect(x + 4, y + 4, width, height, 10, 10, 'F');
+      pdf.setGState(pdf.GState({ opacity: 0.2 }));
+      pdf.roundedRect(x + 6, y + 6, width, height, 15, 15, 'F');
       pdf.setGState(pdf.GState({ opacity: 1 }));
       
       // Main node background with border
       pdf.setFillColor(color[0], color[1], color[2]);
       pdf.setDrawColor(255, 255, 255);
-      pdf.setLineWidth(3);
-      pdf.roundedRect(x, y, width, height, 10, 10, 'FD');
+      pdf.setLineWidth(4);
+      pdf.roundedRect(x, y, width, height, 15, 15, 'FD');
       
-      // White label background area for better text visibility
+      // White label background area for maximum text visibility
       pdf.setFillColor(255, 255, 255);
-      pdf.setGState(pdf.GState({ opacity: 0.95 }));
-      pdf.roundedRect(x + 8, y + height * 0.25, width - 16, height * 0.5, 6, 6, 'F');
+      pdf.setGState(pdf.GState({ opacity: 0.98 }));
+      pdf.roundedRect(x + 12, y + height * 0.15, width - 24, height * 0.7, 8, 8, 'F');
       pdf.setGState(pdf.GState({ opacity: 1 }));
       
-      // PROMINENT Node Label - MAIN TEXT
+      // PROMINENT Node Label - FULL NAME displayed prominently
       const label = (node.data?.label || node.type || 'Node') as string;
-      const maxLabelWidth = width - 24;
+      const maxLabelWidth = width - 30;
       
-      // Calculate appropriate font size based on scale and text length
-      let labelFontSize = Math.max(14, Math.min(18, 16 * scale));
-      if (label.length > 15) labelFontSize = Math.max(12, Math.min(16, 14 * scale));
-      if (label.length > 25) labelFontSize = Math.max(10, Math.min(14, 12 * scale));
+      // Calculate appropriate font size - LARGER for full page
+      let labelFontSize = Math.max(18, Math.min(28, 24 * scale));
+      if (label.length > 15) labelFontSize = Math.max(16, Math.min(24, 20 * scale));
+      if (label.length > 25) labelFontSize = Math.max(14, Math.min(20, 18 * scale));
       
       pdf.setFontSize(labelFontSize);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(51, 65, 85); // Dark text for better readability
+      pdf.setTextColor(51, 65, 85); // Dark text for maximum readability
       
-      // Smart text truncation and wrapping
+      // Smart text handling for FULL NAMES
       let displayLabel = label;
       if (pdf.getTextWidth(label) > maxLabelWidth) {
         const words = label.split(' ');
@@ -189,37 +190,56 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
             const centerY = y + height * 0.45;
             
             pdf.text(firstLine, firstLineX, centerY);
-            pdf.text(secondLine, secondLineX, centerY + labelFontSize * 0.35);
+            pdf.text(secondLine, secondLineX, centerY + labelFontSize * 0.4);
           } else {
-            // Single line with truncation
-            displayLabel = label.substring(0, Math.floor(label.length * maxLabelWidth / pdf.getTextWidth(label)) - 3) + '...';
-            const textWidth = pdf.getTextWidth(displayLabel);
-            const textX = x + (width - textWidth) / 2;
-            pdf.text(displayLabel, textX, y + height * 0.5);
+            // Try three lines for very long names
+            const wordsPerLine = Math.ceil(words.length / 3);
+            const firstLine = words.slice(0, wordsPerLine).join(' ');
+            const secondLine = words.slice(wordsPerLine, wordsPerLine * 2).join(' ');
+            const thirdLine = words.slice(wordsPerLine * 2).join(' ');
+            
+            if (pdf.getTextWidth(firstLine) <= maxLabelWidth && 
+                pdf.getTextWidth(secondLine) <= maxLabelWidth && 
+                pdf.getTextWidth(thirdLine) <= maxLabelWidth) {
+              const centerY = y + height * 0.35;
+              const lineSpacing = labelFontSize * 0.35;
+              
+              pdf.text(firstLine, x + (width - pdf.getTextWidth(firstLine)) / 2, centerY);
+              pdf.text(secondLine, x + (width - pdf.getTextWidth(secondLine)) / 2, centerY + lineSpacing);
+              pdf.text(thirdLine, x + (width - pdf.getTextWidth(thirdLine)) / 2, centerY + lineSpacing * 2);
+            } else {
+              // Fallback: single line with intelligent truncation
+              displayLabel = label.substring(0, Math.floor(label.length * maxLabelWidth / pdf.getTextWidth(label)) - 3) + '...';
+              const textWidth = pdf.getTextWidth(displayLabel);
+              const textX = x + (width - textWidth) / 2;
+              pdf.text(displayLabel, textX, y + height * 0.5);
+            }
           }
         } else {
-          // Single word truncation
-          displayLabel = label.substring(0, Math.floor(label.length * maxLabelWidth / pdf.getTextWidth(label)) - 3) + '...';
+          // Single word - try to fit or truncate intelligently
+          if (pdf.getTextWidth(label) > maxLabelWidth * 1.5) {
+            displayLabel = label.substring(0, Math.floor(label.length * maxLabelWidth / pdf.getTextWidth(label)) - 3) + '...';
+          }
           const textWidth = pdf.getTextWidth(displayLabel);
           const textX = x + (width - textWidth) / 2;
           pdf.text(displayLabel, textX, y + height * 0.5);
         }
       } else {
-        // Label fits, center it
+        // Label fits perfectly, center it
         const textWidth = pdf.getTextWidth(displayLabel);
         const textX = x + (width - textWidth) / 2;
         pdf.text(displayLabel, textX, y + height * 0.5);
       }
       
-      // Node type/subtype label - SMALLER secondary text
+      // Node type/subtype label - READABLE secondary text
       if (node.data?.subtype || node.data?.provider || node.type) {
-        const subtypeFontSize = Math.max(8, Math.min(12, 10 * scale));
+        const subtypeFontSize = Math.max(12, Math.min(16, 14 * scale));
         pdf.setFontSize(subtypeFontSize);
         pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(100, 116, 139); // Lighter color for secondary text
+        pdf.setTextColor(100, 116, 139);
         
         const subtext = (node.data?.provider || node.data?.subtype || node.type || '') as string;
-        const maxSubtextWidth = width - 24;
+        const maxSubtextWidth = width - 30;
         
         let displaySubtext = subtext;
         if (pdf.getTextWidth(subtext) > maxSubtextWidth) {
@@ -228,21 +248,11 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
         
         const subtextWidth = pdf.getTextWidth(displaySubtext);
         const subtextX = x + (width - subtextWidth) / 2;
-        pdf.text(displaySubtext, subtextX, y + height * 0.75);
+        pdf.text(displaySubtext, subtextX, y + height * 0.8);
       }
       
-      // Add node type indicator in corner
-      pdf.setFillColor(color[0], color[1], color[2]);
-      pdf.setGState(pdf.GState({ opacity: 0.8 }));
-      pdf.roundedRect(x + width - 25, y + 5, 20, 15, 3, 3, 'F');
-      pdf.setGState(pdf.GState({ opacity: 1 }));
-      
-      pdf.setFontSize(Math.max(6, 8 * scale));
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(255, 255, 255);
-      const typeAbbr = node.type?.substring(0, 3).toUpperCase() || 'NOD';
-      const typeWidth = pdf.getTextWidth(typeAbbr);
-      pdf.text(typeAbbr, x + width - 15 - typeWidth/2, y + 14);
+      // REMOVE the abbreviated type indicator - we want full names only
+      // The 3-letter abbreviation is no longer needed since we display full names
     });
   }
   
