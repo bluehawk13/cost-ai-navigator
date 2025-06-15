@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,23 +24,6 @@ const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { trackEvent } = useFirebaseAnalytics();
-
-  // Listen for workflow deployment events from use cases
-  useEffect(() => {
-    const handleWorkflowDeployment = (event: CustomEvent) => {
-      console.log('Workflow deployment requested:', event.detail.workflowId);
-      setActiveTab("workflow");
-      trackEvent('workflow_deployed_from_usecase', { 
-        workflowId: event.detail.workflowId 
-      });
-    };
-
-    window.addEventListener('navigate-to-workflow', handleWorkflowDeployment as EventListener);
-    
-    return () => {
-      window.removeEventListener('navigate-to-workflow', handleWorkflowDeployment as EventListener);
-    };
-  }, [trackEvent]);
 
   if (loading) {
     return (
