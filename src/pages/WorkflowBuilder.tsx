@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import {
   ReactFlowProvider,
@@ -78,6 +77,7 @@ const WorkflowBuilderInner = () => {
         label,
         subtype,
         provider,
+        description: '', // Initialize with empty description
         config: getDefaultConfig(nodeType, subtype, provider),
         onConfigChange: handleNodeConfigChange
       },
@@ -219,7 +219,7 @@ const WorkflowBuilderInner = () => {
     return configs[nodeType]?.[subtype] || {};
   };
 
-  const handleNodeConfigChange = useCallback((nodeId: string, newConfig: any) => {
+  const handleNodeConfigChange = useCallback((nodeId: string, newConfig: any, description?: string) => {
     setNodes(nds =>
       nds.map(node => {
         if (node.id === nodeId) {
@@ -227,7 +227,8 @@ const WorkflowBuilderInner = () => {
             ...node,
             data: {
               ...node.data,
-              config: newConfig
+              config: newConfig,
+              description: description !== undefined ? description : node.data.description || ''
             }
           };
         }
@@ -282,7 +283,8 @@ const WorkflowBuilderInner = () => {
           label: node.data?.label || node.type || 'Untitled',
           subtype: node.data?.subtype || '',
           provider: node.data?.provider || null,
-          config: node.data?.config || {}
+          config: node.data?.config || {},
+          description: node.data?.description || ''
         }
       }));
 
@@ -322,7 +324,8 @@ const WorkflowBuilderInner = () => {
             label: node.data?.label || node.type || 'Untitled',
             subtype: node.data?.subtype || '',
             provider: node.data?.provider || null,
-            config: node.data?.config || {}
+            config: node.data?.config || {},
+            description: node.data?.description || '' // Restore description
           }
         }));
         
@@ -357,7 +360,8 @@ const WorkflowBuilderInner = () => {
           label: node.data?.label || node.type || 'Untitled',
           subtype: node.data?.subtype || '',
           provider: node.data?.provider || null,
-          config: node.data?.config || {}
+          config: node.data?.config || {},
+          description: node.data?.description || '' // Restore description from templates
         }
       }));
       setNodes(restoredNodes);
@@ -412,7 +416,8 @@ const WorkflowBuilderInner = () => {
           label: node.data?.label || node.type || 'Untitled',
           subtype: node.data?.subtype || '',
           provider: node.data?.provider || null,
-          config: node.data?.config || {}
+          config: node.data?.config || {},
+          description: node.data?.description || ''
         },
         style: node.style || {}
       })),

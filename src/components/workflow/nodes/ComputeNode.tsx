@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,11 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Cpu, Server, Zap } from 'lucide-react';
+import NodeDescription from './NodeDescription';
 
 const ComputeNode = ({ data, id }: { data: any; id: string }) => {
   const [runtime, setRuntime] = useState(data.config?.runtime || 'python3.9');
   const [memory, setMemory] = useState(data.config?.memory || '128MB');
   const [timeout, setTimeout] = useState(data.config?.timeout || '30s');
+  const [description, setDescription] = useState(data.description || '');
 
   useEffect(() => {
     if (data.onConfigChange) {
@@ -19,9 +20,9 @@ const ComputeNode = ({ data, id }: { data: any; id: string }) => {
         runtime,
         memory,
         timeout
-      });
+      }, description);
     }
-  }, [runtime, memory, timeout, id, data]);
+  }, [runtime, memory, timeout, description, id, data]);
 
   const getIcon = () => {
     switch (data.subtype) {
@@ -146,6 +147,12 @@ const ComputeNode = ({ data, id }: { data: any; id: string }) => {
             </div>
           </div>
         </div>
+
+        <NodeDescription
+          description={description}
+          onDescriptionChange={setDescription}
+          placeholder="Describe what computation this node performs..."
+        />
 
         <Handle
           type="target"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,11 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Link, Webhook, MessageSquare, Zap } from 'lucide-react';
+import NodeDescription from './NodeDescription';
 
 const IntegrationNode = ({ data, id }: { data: any; id: string }) => {
   const [method, setMethod] = useState(data.config?.method || 'POST');
   const [retries, setRetries] = useState(data.config?.retries || 3);
   const [provider, setProvider] = useState(data.config?.provider || 'aws-sqs');
+  const [description, setDescription] = useState(data.description || '');
 
   useEffect(() => {
     if (data.onConfigChange) {
@@ -19,9 +20,9 @@ const IntegrationNode = ({ data, id }: { data: any; id: string }) => {
         method,
         retries,
         provider
-      });
+      }, description);
     }
-  }, [method, retries, provider, id, data]);
+  }, [method, retries, provider, description, id, data]);
 
   const getIcon = () => {
     switch (data.subtype) {
@@ -141,6 +142,12 @@ const IntegrationNode = ({ data, id }: { data: any; id: string }) => {
             )}
           </div>
         </div>
+
+        <NodeDescription
+          description={description}
+          onDescriptionChange={setDescription}
+          placeholder="Describe how this integration connects to external systems..."
+        />
 
         <Handle
           type="target"

@@ -1,11 +1,20 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Filter, CheckCircle, Shuffle } from 'lucide-react';
+import NodeDescription from './NodeDescription';
 
-const LogicNode = ({ data }: { data: any }) => {
+const LogicNode = ({ data, id }: { data: any; id: string }) => {
+  const [description, setDescription] = useState(data.description || '');
+
+  useEffect(() => {
+    if (data.onConfigChange) {
+      data.onConfigChange(id, data.config || {}, description);
+    }
+  }, [description, id, data]);
+
   const getIcon = () => {
     switch (data.subtype) {
       case 'filter': return <Filter className="h-4 w-4" />;
@@ -39,6 +48,12 @@ const LogicNode = ({ data }: { data: any }) => {
             <div>Language: {data.config?.language || 'javascript'}</div>
           )}
         </div>
+
+        <NodeDescription
+          description={description}
+          onDescriptionChange={setDescription}
+          placeholder="Describe what logic this node performs..."
+        />
 
         <Handle
           type="target"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,11 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Database, Cloud, HardDrive, Server, DollarSign } from 'lucide-react';
+import NodeDescription from './NodeDescription';
 
 const DatabaseNode = ({ data, id }: { data: any; id: string }) => {
   const [hostingOption, setHostingOption] = useState(data.config?.hosting || 'self-hosted');
   const [region, setRegion] = useState(data.config?.region || 'us-east-1');
   const [instanceType, setInstanceType] = useState(data.config?.instanceType || 'small');
+  const [description, setDescription] = useState(data.description || '');
 
   // Update node data when configuration changes
   useEffect(() => {
@@ -20,9 +21,9 @@ const DatabaseNode = ({ data, id }: { data: any; id: string }) => {
         hosting: hostingOption,
         region: region,
         instanceType: instanceType
-      });
+      }, description);
     }
-  }, [hostingOption, region, instanceType, id, data]);
+  }, [hostingOption, region, instanceType, description, id, data]);
 
   const getIcon = () => {
     switch (data.subtype) {
@@ -193,6 +194,12 @@ const DatabaseNode = ({ data, id }: { data: any; id: string }) => {
             </div>
           </div>
         </div>
+
+        <NodeDescription
+          description={description}
+          onDescriptionChange={setDescription}
+          placeholder="Describe how this database is used in your workflow..."
+        />
 
         <Handle
           type="target"

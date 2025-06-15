@@ -1,11 +1,20 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Globe, Search } from 'lucide-react';
+import NodeDescription from './NodeDescription';
 
-const DataSourceNode = ({ data }: { data: any }) => {
+const DataSourceNode = ({ data, id }: { data: any; id: string }) => {
+  const [description, setDescription] = useState(data.description || '');
+
+  useEffect(() => {
+    if (data.onConfigChange) {
+      data.onConfigChange(id, data.config || {}, description);
+    }
+  }, [description, id, data]);
+
   const getIcon = () => {
     switch (data.subtype) {
       case 'file': return <FileText className="h-4 w-4" />;
@@ -39,6 +48,12 @@ const DataSourceNode = ({ data }: { data: any }) => {
             <div>Frequency: {data.config?.frequency || 'daily'}</div>
           )}
         </div>
+
+        <NodeDescription
+          description={description}
+          onDescriptionChange={setDescription}
+          placeholder="Describe what data this source provides..."
+        />
 
         <Handle
           type="source"

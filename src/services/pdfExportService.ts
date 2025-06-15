@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { Node, Edge } from '@xyflow/react';
 
@@ -159,7 +158,7 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
   yPosition = 45;
   
   nodes.forEach((node, index) => {
-    if (yPosition > pageHeight - 60) {
+    if (yPosition > pageHeight - 80) {
       pdf.addPage();
       yPosition = 30;
     }
@@ -189,13 +188,47 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
       pdf.text(`Provider: ${String(node.data.provider)}`, margin + 5, yPosition);
       yPosition += 6;
     }
+
+    // Add description if it exists
+    if (node.data?.description) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Description:', margin + 5, yPosition);
+      yPosition += 6;
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(60, 60, 60);
+      
+      // Split long descriptions into multiple lines
+      const description = String(node.data.description);
+      const maxLineWidth = pageWidth - margin * 2 - 10;
+      const lines = pdf.splitTextToSize(description, maxLineWidth);
+      
+      lines.forEach((line: string) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 30;
+        }
+        pdf.text(line, margin + 10, yPosition);
+        yPosition += 5;
+      });
+      
+      yPosition += 3; // Extra space after description
+      pdf.setTextColor(80, 80, 80); // Reset color
+    }
     
     // Configuration details
     if (node.data?.config && Object.keys(node.data.config).length > 0) {
+      pdf.setFont('helvetica', 'bold');
       pdf.text('Configuration:', margin + 5, yPosition);
       yPosition += 6;
       
+      pdf.setFont('helvetica', 'normal');
       Object.entries(node.data.config).forEach(([key, value]) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 30;
+        }
+        
         if (typeof value === 'object' && value !== null) {
           pdf.text(`  ${key}: ${JSON.stringify(value)}`, margin + 10, yPosition);
         } else {

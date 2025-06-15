@@ -6,10 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Bot, Brain, Cpu } from 'lucide-react';
+import NodeDescription from './NodeDescription';
 
 const AIModelNode = ({ data, id }: { data: any; id: string }) => {
   const [selectedModel, setSelectedModel] = useState(data.config?.model || '');
   const [maxTokens, setMaxTokens] = useState(data.config?.maxTokens || 2000);
+  const [description, setDescription] = useState(data.description || '');
 
   // Update node data when configuration changes
   useEffect(() => {
@@ -18,9 +20,9 @@ const AIModelNode = ({ data, id }: { data: any; id: string }) => {
         ...data.config,
         model: selectedModel,
         maxTokens: maxTokens
-      });
+      }, description);
     }
-  }, [selectedModel, maxTokens, id, data]);
+  }, [selectedModel, maxTokens, description, id, data]);
 
   const getIcon = () => {
     switch (data.provider) {
@@ -122,6 +124,12 @@ const AIModelNode = ({ data, id }: { data: any; id: string }) => {
             </div>
           )}
         </div>
+
+        <NodeDescription
+          description={description}
+          onDescriptionChange={setDescription}
+          placeholder="Describe what this AI model does in your workflow..."
+        />
 
         <Handle
           type="target"
