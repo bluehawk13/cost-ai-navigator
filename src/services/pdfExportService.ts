@@ -268,7 +268,7 @@ export const exportWorkflowToPDF = ({ nodes, edges, workflowName = 'Untitled Wor
   pdf.setTextColor(255, 255, 255);
   pdf.text('Component Details', margin, 22);
   
-  yPosition = 50;
+  let yPosition = 50; // Fix: Declare yPosition variable
   
   nodes.forEach((node, index) => {
     // Check if we need a new page - better spacing
