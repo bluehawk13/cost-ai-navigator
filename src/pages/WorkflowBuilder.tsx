@@ -14,6 +14,9 @@ const WorkflowBuilder = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
+  const [isActionsPanelCollapsed, setIsActionsPanelCollapsed] = useState(false);
+  const [costEstimationCounter, setCostEstimationCounter] = useState(0);
   const { loadWorkflow } = useWorkflows();
 
   // Check for template loading on component mount
@@ -135,7 +138,11 @@ const WorkflowBuilder = () => {
         <div className="flex-1 flex overflow-hidden">
           {/* Component Palette */}
           <div className="w-80 bg-white border-r border-gray-200 flex-shrink-0">
-            <EnhancedComponentPalette onAddNode={handleAddNode} />
+            <EnhancedComponentPalette 
+              onAddNode={handleAddNode}
+              isCollapsed={isPaletteCollapsed}
+              onToggle={() => setIsPaletteCollapsed(!isPaletteCollapsed)}
+            />
           </div>
 
           {/* Workflow Canvas */}
@@ -161,11 +168,11 @@ const WorkflowBuilder = () => {
           {/* Actions Panel */}
           <div className="w-96 bg-white border-l border-gray-200 flex-shrink-0">
             <WorkflowActionsPanel 
-              selectedNode={selectedNode}
               nodes={nodes}
               edges={edges}
-              onNodesChange={setNodes}
-              onNewWorkflow={handleNewWorkflow}
+              isCollapsed={isActionsPanelCollapsed}
+              onToggle={() => setIsActionsPanelCollapsed(!isActionsPanelCollapsed)}
+              costEstimationCounter={costEstimationCounter}
             />
           </div>
         </div>
