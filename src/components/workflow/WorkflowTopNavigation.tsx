@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +15,14 @@ import {
   Upload,
   FolderOpen,
   Circle,
-  ChevronDown
+  ChevronDown,
+  Layout
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 import { useWorkflows } from '@/hooks/useWorkflows';
 import { toast } from "@/hooks/use-toast";
+import { exportWorkflowToPDF } from '@/services/pdfExportService';
+import { workflowTemplates } from '@/data/workflowTemplates';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,6 +66,7 @@ const WorkflowTopNavigation = ({
   const { workflows, loading } = useWorkflows();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
   const [workflowName, setWorkflowName] = useState(currentWorkflowName);
   const [workflowDescription, setWorkflowDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +127,54 @@ const WorkflowTopNavigation = ({
     fileInputRef.current?.click();
   };
 
+  const handleExportPDF = () => {
+    if (nodes.length === 0) {
+      toast({
+        title: "No Components",
+        description: "Please add some workflow components before exporting to PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    exportWorkflowToPDF({
+      nodes,
+      edges,
+      workflowName: currentWorkflowName || 'Untitled Workflow'
+    });
+
+    toast({
+      title: "PDF Export Complete",
+      description: "Workflow diagram and details exported to PDF",
+    });
+  };
+
+  const handleLoadTemplate = (template: typeof workflowTemplates[0]) => {
+    if (hasUnsavedChanges) {
+      const confirm = window.confirm('You have unsaved changes. Are you sure you want to load this template?');
+      if (!confirm) return;
+    }
+
+    const templateData = {
+      nodes: template.nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          onConfigChange: () => {} // This will be set properly in the parent component
+        }
+      })),
+      edges: template.edges
+    };
+
+    onLoadWorkflow(templateData);
+    setTemplatesDialogOpen(false);
+    
+    toast({
+      title: "Template Loaded",
+      description: `${template.name} template loaded successfully`,
+    });
+  };
+
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-3">
       <div className="flex items-center justify-between">
@@ -148,6 +199,46 @@ const WorkflowTopNavigation = ({
             <Plus className="h-4 w-4 mr-2" />
             New
           </Button>
+
+          <Dialog open={templatesDialogOpen} onOpenChange={setTemplatesDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Layout className="h-4 w-4 mr-2" />
+                Templates
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Workflow Templates</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 md:grid-cols-2">
+                {workflowTemplates.map((template) => (
+                  <div key={template.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-medium text-sm">{template.name}</h4>
+                        <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1 inline-block">
+                          {template.category}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleLoadTemplate(template)}
+                        size="sm"
+                        className="ml-2"
+                      >
+                        Use Template
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">{template.description}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>{template.nodes.length} components</span>
+                      <span>{template.edges.length} connections</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
             <DialogTrigger asChild>
@@ -282,7 +373,7 @@ const WorkflowTopNavigation = ({
                 <Download className="h-4 w-4 mr-2" />
                 Export as JSON
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onExportPDF}>
+              <DropdownMenuItem onClick={handleExportPDF}>
                 <Download className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>

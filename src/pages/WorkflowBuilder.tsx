@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import {
   ReactFlowProvider,
@@ -18,6 +19,7 @@ import '@xyflow/react/dist/style.css';
 import { toast } from "@/hooks/use-toast";
 import { useWorkflows } from '@/hooks/useWorkflows';
 import { useUnsavedChanges } from '@/hooks/workflow/useUnsavedChanges';
+import { exportWorkflowToPDF } from '@/services/pdfExportService';
 import WorkflowTopNavigation from '@/components/workflow/WorkflowTopNavigation';
 import EnhancedComponentPalette from '@/components/workflow/EnhancedComponentPalette';
 import WorkflowActionsPanel from '@/components/workflow/WorkflowActionsPanel';
