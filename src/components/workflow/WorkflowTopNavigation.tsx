@@ -1,26 +1,32 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Save, 
   Plus, 
   Download, 
-  FileText, 
   Play, 
   ZoomIn, 
   ZoomOut, 
   Maximize, 
   Upload,
   FolderOpen,
-  Circle
+  Circle,
+  ChevronDown
 } from 'lucide-react';
 import { Node, Edge } from '@xyflow/react';
 import { useWorkflows } from '@/hooks/useWorkflows';
 import { toast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface WorkflowTopNavigationProps {
   nodes: Node[];
@@ -134,9 +140,6 @@ const WorkflowTopNavigation = ({
               </div>
             )}
           </div>
-          <Badge variant="secondary" className="text-xs">
-            {nodes.length} components, {edges.length} connections
-          </Badge>
         </div>
 
         {/* Center Section - Main Actions */}
@@ -223,7 +226,6 @@ const WorkflowTopNavigation = ({
                               )}
                               <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                 <span>Updated: {new Date(workflow.updated_at).toLocaleDateString()}</span>
-                                <span>{workflow.metadata?.nodeCount || 0} components</span>
                               </div>
                             </div>
                             <Button
@@ -267,14 +269,26 @@ const WorkflowTopNavigation = ({
 
         {/* Right Section - Export, Run, and Zoom Controls */}
         <div className="flex items-center space-x-2">
-          <Button onClick={onExportJSON} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export JSON
-          </Button>
-          <Button onClick={onExportPDF} variant="outline" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onExportJSON}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onExportPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button onClick={onRunCostEstimation} size="sm">
             <Play className="h-4 w-4 mr-2" />
             Run Cost Estimation

@@ -32,12 +32,29 @@ export const useUnsavedChanges = () => {
       }
     };
 
+    // Intercept navigation attempts
+    const handleLinkClick = (e: Event) => {
+      if (hasUnsavedChanges) {
+        const target = e.target as HTMLElement;
+        const link = target.closest('a');
+        if (link && link.href && !link.href.includes('#')) {
+          const confirm = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+          if (!confirm) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', handlePopState);
+    document.addEventListener('click', handleLinkClick, true);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('click', handleLinkClick, true);
     };
   }, [hasUnsavedChanges]);
 

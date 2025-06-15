@@ -273,12 +273,10 @@ const WorkflowBuilderInner = () => {
     }
 
     try {
-      // Ensure all nodes have complete data before saving
       const nodesToSave = nodes.map(node => ({
         ...node,
         data: {
           ...node.data,
-          // Ensure all required fields are present
           label: node.data?.label || node.type || 'Untitled',
           subtype: node.data?.subtype || '',
           provider: node.data?.provider || null,
@@ -298,11 +296,10 @@ const WorkflowBuilderInner = () => {
       }
       
       setCurrentWorkflowName(name);
-      markAsSaved();
+      markAsSaved(); // Mark as saved after successful save
       
     } catch (error) {
       console.error('Error saving workflow:', error);
-      // Error handling is done in the hook
     }
   }, [saveWorkflow, nodes, edges, currentWorkflowId, markAsSaved]);
 
@@ -315,13 +312,11 @@ const WorkflowBuilderInner = () => {
     try {
       const result = await loadWorkflow(workflowId);
       if (result) {
-        // Restore nodes with proper config change handlers
         const restoredNodes = result.nodes.map(node => ({
           ...node,
           data: {
             ...node.data,
             onConfigChange: handleNodeConfigChange,
-            // Ensure all data fields are properly restored
             label: node.data?.label || node.type || 'Untitled',
             subtype: node.data?.subtype || '',
             provider: node.data?.provider || null,
@@ -357,7 +352,6 @@ const WorkflowBuilderInner = () => {
         data: {
           ...node.data,
           onConfigChange: handleNodeConfigChange,
-          // Ensure proper data structure
           label: node.data?.label || node.type || 'Untitled',
           subtype: node.data?.subtype || '',
           provider: node.data?.provider || null,
@@ -461,17 +455,6 @@ const WorkflowBuilderInner = () => {
       description: "Generating PDF report with cost breakdown...",
     });
   }, []);
-
-  // Track changes when nodes or edges change
-  React.useEffect(() => {
-    if (nodes.length > 0 || edges.length > 0) {
-      // Only mark as changed if we actually have content and it's not a fresh load
-      const hasContent = nodes.length > 0 || edges.length > 0;
-      if (hasContent && !hasUnsavedChanges) {
-        // This is likely a fresh load, don't mark as changed immediately
-      }
-    }
-  }, [nodes.length, edges.length]);
 
   // Fit view when nodes change
   React.useEffect(() => {
