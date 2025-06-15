@@ -11,7 +11,11 @@ export const convertNodesToDatabase = (nodes: Node[], workflowId: string): Omit<
     label: String(node.data?.label || ''),
     position_x: node.position.x,
     position_y: node.position.y,
-    config: node.data?.config || {},
+    config: {
+      ...node.data?.config,
+      provider: node.data?.provider || null,
+      onConfigChange: undefined // Remove function references that can't be serialized
+    },
     style: node.style || {}
   }));
 };
@@ -37,7 +41,9 @@ export const convertDatabaseToNodes = (dbNodes: WorkflowNode[]): Node[] => {
     data: {
       label: node.label,
       subtype: node.subtype,
-      config: node.config
+      provider: node.config?.provider || null,
+      config: node.config || {},
+      // Note: onConfigChange will be re-added when the workflow is loaded
     },
     style: node.style as React.CSSProperties
   }));

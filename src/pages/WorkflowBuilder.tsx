@@ -260,10 +260,23 @@ const WorkflowBuilderInner = () => {
     }
 
     try {
+      // Ensure all nodes have complete data before saving
+      const nodesToSave = nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          // Ensure all required fields are present
+          label: node.data?.label || node.type || 'Untitled',
+          subtype: node.data?.subtype || '',
+          provider: node.data?.provider || null,
+          config: node.data?.config || {}
+        }
+      }));
+
       const workflowId = await saveWorkflow({
         name,
         description,
-        nodes,
+        nodes: nodesToSave,
         edges,
         workflowId: currentWorkflowId
       });
@@ -280,13 +293,21 @@ const WorkflowBuilderInner = () => {
     try {
       const result = await loadWorkflow(workflowId);
       if (result) {
-        setNodes(result.nodes.map(node => ({
+        // Restore nodes with proper config change handlers
+        const restoredNodes = result.nodes.map(node => ({
           ...node,
           data: {
             ...node.data,
-            onConfigChange: handleNodeConfigChange
+            onConfigChange: handleNodeConfigChange,
+            // Ensure all data fields are properly restored
+            label: node.data?.label || node.type || 'Untitled',
+            subtype: node.data?.subtype || '',
+            provider: node.data?.provider || null,
+            config: node.data?.config || {}
           }
-        })));
+        }));
+        
+        setNodes(restoredNodes);
         setEdges(result.edges);
         setCurrentWorkflowId(workflowId);
         setCostEstimationCounter(0);
@@ -302,13 +323,19 @@ const WorkflowBuilderInner = () => {
 
   const handleLoadWorkflowData = useCallback((workflowData: any) => {
     if (workflowData.nodes) {
-      setNodes(workflowData.nodes.map(node => ({
+      const restoredNodes = workflowData.nodes.map(node => ({
         ...node,
         data: {
           ...node.data,
-          onConfigChange: handleNodeConfigChange
+          onConfigChange: handleNodeConfigChange,
+          // Ensure proper data structure
+          label: node.data?.label || node.type || 'Untitled',
+          subtype: node.data?.subtype || '',
+          provider: node.data?.provider || null,
+          config: node.data?.config || {}
         }
-      })));
+      }));
+      setNodes(restoredNodes);
     }
     if (workflowData.edges) {
       setEdges(workflowData.edges);
@@ -354,20 +381,30 @@ const WorkflowBuilderInner = () => {
         id: node.id,
         type: node.type,
         position: node.position,
-        data: node.data
+        data: {
+          label: node.data?.label || node.type || 'Untitled',
+          subtype: node.data?.subtype || '',
+          provider: node.data?.provider || null,
+          config: node.data?.config || {}
+        },
+        style: node.style || {}
       })),
       edges: edges.map(edge => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
         sourceHandle: edge.sourceHandle,
-        targetHandle: edge.targetHandle
+        targetHandle: edge.targetHandle,
+        type: edge.type,
+        style: edge.style || {}
       })),
       metadata: {
         name: 'AI Workflow Export',
         version: '1.0.0',
         createdAt: new Date().toISOString(),
-        description: 'AI agent pipeline workflow'
+        description: 'AI agent pipeline workflow',
+        nodeCount: nodes.length,
+        edgeCount: edges.length
       }
     };
 

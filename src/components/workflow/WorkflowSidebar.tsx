@@ -48,11 +48,32 @@ const WorkflowSidebar = ({
       return;
     }
 
+    if (nodes.length === 0) {
+      toast({
+        title: "Error",
+        description: "Cannot save an empty workflow. Please add some components first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Ensure all nodes have complete data before saving
+      const nodesToSave = nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          label: node.data?.label || node.type || 'Untitled',
+          subtype: node.data?.subtype || '',
+          provider: node.data?.provider || null,
+          config: node.data?.config || {}
+        }
+      }));
+
       await saveWorkflow({
         name: workflowName,
         description: workflowDescription,
-        nodes,
+        nodes: nodesToSave,
         edges,
         workflowId: currentWorkflowId
       });
@@ -68,7 +89,19 @@ const WorkflowSidebar = ({
     try {
       const result = await loadWorkflow(workflowId);
       if (result) {
-        onLoadWorkflow(result.nodes, result.edges, workflowId);
+        // Ensure loaded nodes have proper data structure
+        const restoredNodes = result.nodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            label: node.data?.label || node.type || 'Untitled',
+            subtype: node.data?.subtype || '',
+            provider: node.data?.provider || null,
+            config: node.data?.config || {}
+          }
+        }));
+        
+        onLoadWorkflow(restoredNodes, result.edges, workflowId);
         toast({
           title: "Success",
           description: `Loaded workflow: ${result.workflow.name}`,
@@ -86,25 +119,44 @@ const WorkflowSidebar = ({
   };
 
   const exportWorkflow = () => {
+    if (nodes.length === 0) {
+      toast({
+        title: "No Components",
+        description: "Please add some workflow components before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const workflow = {
       nodes: nodes.map(node => ({
         id: node.id,
         type: node.type,
         position: node.position,
-        data: node.data
+        data: {
+          label: node.data?.label || node.type || 'Untitled',
+          subtype: node.data?.subtype || '',
+          provider: node.data?.provider || null,
+          config: node.data?.config || {}
+        },
+        style: node.style || {}
       })),
       edges: edges.map(edge => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
         sourceHandle: edge.sourceHandle,
-        targetHandle: edge.targetHandle
+        targetHandle: edge.targetHandle,
+        type: edge.type,
+        style: edge.style || {}
       })),
       metadata: {
         name: 'AI Workflow Export',
         version: '1.0.0',
         createdAt: new Date().toISOString(),
-        description: 'AI agent pipeline workflow'
+        description: 'AI agent pipeline workflow',
+        nodeCount: nodes.length,
+        edgeCount: edges.length
       }
     };
 
@@ -120,7 +172,7 @@ const WorkflowSidebar = ({
 
     toast({
       title: "Workflow Exported",
-      description: "Workflow saved as JSON file",
+      description: "Enhanced workflow saved as JSON file",
     });
   };
 

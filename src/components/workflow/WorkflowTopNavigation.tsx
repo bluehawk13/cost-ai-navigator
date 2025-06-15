@@ -276,7 +276,23 @@ const WorkflowTopNavigation = ({
             if (!workflow.nodes || !Array.isArray(workflow.nodes)) {
               throw new Error('Invalid workflow format: missing nodes array');
             }
-            onLoadWorkflow(workflow);
+            
+            // Ensure imported nodes have proper data structure
+            const processedWorkflow = {
+              ...workflow,
+              nodes: workflow.nodes.map(node => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  label: node.data?.label || node.type || 'Untitled',
+                  subtype: node.data?.subtype || '',
+                  provider: node.data?.provider || null,
+                  config: node.data?.config || {}
+                }
+              }))
+            };
+            
+            onLoadWorkflow(processedWorkflow);
             const workflowName = workflow.metadata?.name;
             toast({
               title: "Workflow Imported",
@@ -498,11 +514,26 @@ output "workflow_info" {
       pdf.setFont('helvetica', 'bold');
       pdf.text('AI Workflow Diagram', 20, 25);
       
-      // Add metadata
+      // Add metadata with enhanced information
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'normal');
       pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 35);
       pdf.text(`Components: ${nodes.length} | Connections: ${edges.length}`, 20, 42);
+      
+      // Add component breakdown
+      const nodeTypes = nodes.reduce((acc, node) => {
+        const type = node.type || 'default';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      let yPos = 50;
+      pdf.text('Component Breakdown:', 20, yPos);
+      yPos += 7;
+      Object.entries(nodeTypes).forEach(([type, count]) => {
+        pdf.text(`• ${type}: ${count}`, 25, yPos);
+        yPos += 5;
+      });
       
       // Calculate workflow bounds
       const minX = Math.min(...nodes.map(n => n.position.x));
@@ -515,13 +546,13 @@ output "workflow_info" {
       
       // Scale to fit page
       const availableWidth = pageWidth - 40;
-      const availableHeight = pageHeight - 80;
+      const availableHeight = pageHeight - (yPos + 40);
       const scale = Math.min(availableWidth / workflowWidth, availableHeight / workflowHeight, 1);
       
-      // Draw nodes
+      // Draw nodes with enhanced information
       nodes.forEach((node) => {
         const x = 20 + (node.position.x - minX) * scale;
-        const y = 60 + (node.position.y - minY) * scale;
+        const y = yPos + 20 + (node.position.y - minY) * scale;
         const width = 50 * scale;
         const height = 25 * scale;
         
@@ -549,18 +580,26 @@ output "workflow_info" {
           case 'cloud':
             pdf.setDrawColor(6, 182, 212);
             break;
+          case 'compute':
+            pdf.setDrawColor(247, 147, 26);
+            break;
+          case 'integration':
+            pdf.setDrawColor(99, 102, 241);
+            break;
           default:
             pdf.setDrawColor(107, 114, 128);
         }
         pdf.setLineWidth(0.5);
         pdf.rect(x, y, width, height);
         
-        // Node text
+        // Node text with subtype if available
         pdf.setFontSize(8);
         pdf.setTextColor(0, 0, 0);
-        const text = String(node.data?.label || node.type || '');
+        const label = String(node.data?.label || node.type || '');
+        const subtype = node.data?.subtype ? ` (${node.data.subtype})` : '';
+        const text = label + subtype;
         const textWidth = pdf.getTextWidth(text);
-        const textX = x + (width - textWidth) / 2;
+        const textX = x + Math.max(0, (width - textWidth) / 2);
         const textY = y + height / 2 + 1;
         pdf.text(text, textX, textY);
       });
@@ -610,7 +649,9 @@ output "workflow_info" {
         { type: 'Databases', color: [16, 185, 129] },
         { type: 'Logic', color: [245, 158, 11] },
         { type: 'Outputs', color: [239, 68, 68] },
-        { type: 'Cloud', color: [6, 182, 212] }
+        { type: 'Cloud', color: [6, 182, 212] },
+        { type: 'Compute', color: [247, 147, 26] },
+        { type: 'Integration', color: [99, 102, 241] }
       ];
       
       legendItems.forEach((item, index) => {
@@ -629,7 +670,7 @@ output "workflow_info" {
       
       toast({
         title: "PDF Exported",
-        description: "Workflow diagram saved as PDF successfully",
+        description: "Enhanced workflow diagram saved as PDF successfully",
       });
     } catch (error) {
       console.error('PDF export error:', error);
